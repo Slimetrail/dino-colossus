@@ -22,7 +22,7 @@ canvas{display:block;position:fixed;inset:0}
 <button class="cb" id="bl">◀</button><button class="cb" id="br">▶</button><button class="cb" id="bj">JUMP</button><button class="cb hide" id="bp"></button><button id="bs" class="hide">swap power</button>
 <div id="start" class="ov"><div style="font-size:54px">🦖🌋</div><h1>Dino Colossus</h1>
 <p>Pick your dino:</p><div id="dinos"></div><div id="dname" style="font-size:14px;margin-top:4px"></div>
-<p>🏆 Best: <b id="best">0</b></p><button class="big" id="go">PLAY</button><button class="sm" id="howb">❓ How to play</button></div>
+<p>🏆 Best: <b id="best">0</b></p><button class="big" id="go">PLAY</button><button class="big" id="instb" style="background:#ff9800;box-shadow:0 6px #b35c00;font-size:20px;padding:10px 26px">📲 Install app</button><div id="insth" class="hide" style="font-size:13px;max-width:320px;margin-top:6px;background:#0004;border-radius:10px;padding:6px 10px"></div><button class="sm" id="howb">❓ How to play</button></div>
 <div id="how" class="ov hide"><h2>How to play</h2><div>
 <p>◀ ▶ to run (arrow keys / A D), <b>JUMP</b> (Space / W / ↑), <b>POWER</b> (E).</p>
 <p>🧍 Gobble up cave people. Your belly grows! Run to a 🌋 volcano and BLEHHH them into the crater for a giant BOOM. They parachute down safely 🪂. Bigger loads = way more points.</p>
@@ -34,5 +34,10 @@ canvas{display:block;position:fixed;inset:0}
 <p>The run never ends. Every section is a new random place, and day turns to night as you play.</p></div>
 <button class="big" id="howx">Got it!</button></div>
 <div id="end" class="ov hide"><h1>Game over!</h1><p style="font-size:28px">⭐ <b id="final">0</b></p><p id="nb"></p><button class="big" id="again">PLAY AGAIN</button><button class="sm" id="menu">Change dino</button></div>
-<script src="sprites.js?v=2"></script><script src="game.js?v=2"></script>
-<script>if('serviceWorker'in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js?v=2');try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})}catch(e){}</script></body></html>
+<script src="sprites.js?v=3"></script><script src="game.js?v=3"></script>
+<script>if('serviceWorker'in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js?v=3');try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})}catch(e){}</script><script>(function(){let dp=null;const b=document.getElementById('instb'),t=document.getElementById('insth');
+const inst=()=>matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone;
+if(inst())b.classList.add('hide');
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e});
+addEventListener('appinstalled',()=>{b.classList.add('hide');t.classList.add('hide')});
+b.onclick=async()=>{if(dp){dp.prompt();const r=await dp.userChoice;dp=null;if(r.outcome==='accepted')b.classList.add('hide')}else{const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);t.textContent=ios?'On iPhone: tap Share, then Add to Home Screen.':'Tap ⋮ in Chrome, then Add to Home screen / Install app.';t.classList.remove('hide')}};})();</script></body></html>
