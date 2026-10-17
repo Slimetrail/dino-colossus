@@ -19,14 +19,25 @@ canvas{display:block;position:fixed;inset:0}
 #how p{font-size:17px;line-height:1.35;margin:6px 0;padding:2px 8px;border-radius:10px}#how p.reading{background:#ffd84a;color:#2b2240}
 #readb,#stopb{font-size:24px;padding:12px 30px;min-height:60px;background:#ffd84a;color:#4a2a00;box-shadow:0 6px #b38b00}#stopb{background:#ef5350;color:#fff;box-shadow:0 6px #8e1c1c}
 #howbtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;position:sticky;bottom:-14px;background:#283593;padding:6px 10px 14px;border-radius:16px 16px 0 0;box-shadow:0 -6px 12px #0005;margin-top:4px}
-table.top{border-collapse:collapse;font-size:16px;background:#0006;border-radius:12px;margin:0 auto}table.top td,table.top th{padding:3px 12px}table.top tr.new{background:#ffd84a;color:#4a2a00;font-weight:900}.bt{margin:4px 0!important;font-size:16px!important}
+#board,#end{padding:.8vh 2vw}#endR{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#boardList,#endBoard{width:100%;display:flex;justify-content:center}
+.tpanel{width:min(95vw,1100px);height:calc(98.4vh - 24px);display:flex;flex-direction:column;background:#0b1250e0;border:4px solid #ffd84a;border-radius:18px;overflow:hidden;box-sizing:border-box;box-shadow:0 6px 0 #0005}
+.thead{display:flex;align-items:center;justify-content:space-between;gap:2vw;padding:.8vh 1.5vw;background:#1a237e;border-bottom:3px solid #ffd84a;flex:0 0 auto}
+.ttl{font-size:min(6.4vh,5vw);color:#ffd84a;white-space:nowrap;text-shadow:0 3px #000}
+.tabs{display:flex;gap:1vw}.tabs button{font:inherit;font-size:min(5.2vh,4vw);min-height:max(44px,10.5vh);min-width:max(64px,13vw);padding:0 1.5vw;border-radius:40px;border:3px solid transparent;background:#ffffff22;color:#fff;cursor:pointer;touch-action:manipulation}
+.tabs button.on{background:#2e7d32;border-color:#fff}
+.twrap{flex:1 1 auto;min-height:0;display:flex}
+table.top{width:100%;height:100%;border-collapse:collapse;table-layout:fixed;font-size:min(5.6vh,5vw);color:#fff}
+table.top th{font-size:.7em;color:#ffd84a;background:#00000033}table.top td,table.top th{padding:0 .6em;text-align:center;line-height:1}
+table.top tbody tr:nth-child(even){background:#ffffff12}table.top tr.new{background:#ffd84a!important;color:#4a2a00;font-weight:900}table.top tr.empty{opacity:.45}
+.hint{margin:2px 0 0!important;font-size:clamp(12px,3.4vh,18px)!important;line-height:1.1;opacity:.9}
 #iniCols{display:flex;gap:14px;justify-content:center;margin:6px 0}.col{display:flex;flex-direction:column;align-items:center;gap:4px}
 .col button{width:76px;height:60px;font-size:30px;border:0;border-radius:14px;background:#ffd84a;color:#4a2a00;font-weight:900;box-shadow:0 4px #b38b00;touch-action:manipulation}
 .col button:active{transform:translateY(3px);box-shadow:0 1px #b38b00}.col .L{font-size:52px;font-weight:900;width:76px;line-height:1.1;background:#fff;color:#2b2240;border-radius:12px;text-align:center}
 #end{overflow-y:auto}#endL,#endR{display:flex;flex-direction:column;align-items:center}
-#board{overflow-y:auto;background:linear-gradient(#5c6bc0,#283593)}
-@media (orientation:landscape) and (max-height:560px){#end{flex-direction:row;gap:24px}#end h1{font-size:28px}#end p{margin:2px 0}
- .col button{height:52px}.col .L{font-size:44px}table.top{font-size:14px}table.top td,table.top th{padding:1px 10px}#board h2{margin:0}}
+#board{overflow:hidden;background:linear-gradient(#5c6bc0,#283593)}#end{overflow:hidden}
+@media (orientation:landscape) and (max-height:560px){#end h1{font-size:28px}#end p{margin:2px 0}
+ .col button{height:52px}.col .L{font-size:44px}}
 @media (max-height:460px){.ov{padding:6px}.ov h1{font-size:28px;margin:0}.ov p{margin:3px 0;font-size:13px}.big{padding:7px 26px;font-size:19px;margin-top:5px}.sm{margin-top:4px;padding:5px 14px}#dinos button{font-size:22px;padding:2px 4px;margin:2px}#dinos img{width:32px;height:32px}#start>div:first-child{font-size:30px!important}}
 
 #start{padding:calc(8px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));overflow-y:auto;justify-content:safe center}
@@ -63,10 +74,10 @@ table.top{border-collapse:collapse;font-size:16px;background:#0006;border-radius
 <p id="readmsg" style="font-size:14px"></p><div id="howbtns"><button class="big" id="readb" type="button">🔊 Read to me</button><button class="big hide" id="stopb" type="button">⏹ Stop</button><button class="big" id="howx" type="button">Got it!</button></div></div>
 <div id="end" class="ov hide"><div id="endL"><h1>Game over!</h1><p style="font-size:28px">⭐ <b id="final">0</b></p><p id="nb"></p>
 <div id="ini" class="hide"><p><b>🎉 TOP 10! Pick your 3 letters</b></p><div id="iniCols"></div><button class="big" id="iniSave" type="button">✔ OK</button></div>
-<button class="big" id="again" type="button">🦖 PICK NEW DINO</button></div><div id="endR"><div id="endBoard"></div></div></div>
-<div id="board" class="ov hide"><h2>🏆 Top 10</h2><div id="bdiffs" style="margin:4px 0"><button type="button" class="sm" data-d="easy" style="border:3px solid transparent;margin:2px">Easy</button><button type="button" class="sm" data-d="medium" style="border:3px solid transparent;margin:2px">Medium</button><button type="button" class="sm" data-d="hard" style="border:3px solid transparent;margin:2px">Hard</button></div><div id="boardList"></div><button class="big" id="boardx" type="button">⬅ Back</button></div>
-<script src="sprites.js?v=5"></script><script src="game.js?v=5"></script>
-<script>if('serviceWorker'in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js?v=5');try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})}catch(e){}</script><script>(function(){let dp=null;const b=document.getElementById('instb'),t=document.getElementById('insth');
+</div><div id="endR" class="hide"><div id="endBoard"></div><p class="hint">👆 Tap anywhere to pick a new dino</p></div></div>
+<div id="board" class="ov hide"><div id="boardList"></div><p class="hint">👆 Tap anywhere to go back</p></div>
+<script src="sprites.js?v=6"></script><script src="game.js?v=6"></script>
+<script>if('serviceWorker'in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js?v=6');try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})}catch(e){}</script><script>(function(){let dp=null;const b=document.getElementById('instb'),t=document.getElementById('insth');
 const inst=()=>matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone;
 if(inst())b.classList.add('hide');
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e});

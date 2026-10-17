@@ -32,8 +32,9 @@ for(const d of Object.keys(DIFFS)){if(!LS[topKey(d)]){const ob=+LS['dinoColossus
 function qualifies(d,sc){const t=loadTop(d);return sc>0&&(t.length<10||sc>t[t.length-1].s)}
 function insertTop(d,e){e.t=e.t||Date.now();const t=loadTop(d);t.push(e);t.sort((x,y)=>y.s-x.s||x.t-y.t);const r=t.slice(0,10);saveTop(d,r);const k=r.findIndex(q=>q.t===e.t&&q.s===e.s&&q.i===e.i);if(r[0])try{LS['dinoColossus_Best_'+d]=Math.max(+LS['dinoColossus_Best_'+d]||0,r[0].s)}catch(_){}return k}
 function topBest(d){const t=loadTop(d);return t.length?t[0].s:0}
-function boardHTML(d,hi){const t=loadTop(d);if(!t.length)return '<p>No scores yet. Go play!</p>';
- return '<table class="top"><tr><th>#</th><th>NAME</th><th>SCORE</th><th>SEC</th></tr>'+t.map((e,k)=>'<tr class="'+(k===hi?'new':'')+'"><td>'+(k+1)+'</td><td>'+e.i+'</td><td>'+e.s+'</td><td>'+(e.sec||'-')+'</td></tr>').join('')+'</table>'}
+function boardHTML(d,hi,title){const t=loadTop(d),rows=[];for(let k=0;k<10;k++){const e=t[k];rows.push('<tr class="'+(e&&k===hi?'new':'')+(e?'':' empty')+'"><td>'+(k+1)+'</td><td>'+(e?e.i:'---')+'</td><td>'+(e?e.s:'-')+'</td><td>'+(e&&e.sec?e.sec:'-')+'</td></tr>')}
+ return '<div class="tpanel" data-d="'+d+'"><div class="thead"><span class="ttl">'+(title||'🏆 TOP 10')+'</span><span class="tabs">'+Object.keys(DIFFS).map(k=>'<button type="button" data-d="'+k+'" aria-pressed="'+(k===d)+'" class="'+(k===d?'on':'')+'">'+DIFFS[k][0]+DIFFS[k].slice(1).toLowerCase()+'</button>').join('')+'</span></div>'
+  +'<div class="twrap"><table class="top"><thead><tr><th>#</th><th>NAME</th><th>SCORE</th><th>SECTION</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div></div>'}
 let best=topBest(diff),snd=LS.dinoColossus_Snd!=='0',pick=+LS.dinoColossus_Dino||0,gems=+LS.dinoColossus_Diamonds||0;
 let unl=JSON.parse(LS.dinoColossus_Unlocks||'{}'),stats=JSON.parse(LS.dinoColossus_Stats||'{"eaten":0,"erupts":0}');
 const POWERS={speed:{e:'⚡',n:'Speed Boost',how:'eat 25 people (total)'},big:{e:'🍔',n:'Big Belly',how:'do 4 volcano eruptions (total)'},flame:{e:'🔥',n:'Flame Breath',how:'collect 5 💎 or beat the first boss'}};
@@ -58,7 +59,7 @@ function showPowers(){$('powers').innerHTML=Object.entries(POWERS).map(([k,p])=>
 function renderDiff(){document.querySelectorAll('#diffs button').forEach(b=>{const on=b.dataset.d===diff;b.setAttribute('aria-pressed',on);b.style.borderColor=on?'#fff':'transparent';b.style.background=on?'#2e7d32':'#0004'});best=topBest(diff);$('best').textContent=best;$('bestd').textContent=DIFFS[diff]}
 $('diffs').addEventListener('click',e=>{const b=e.target.closest('button[data-d]');if(!b)return;diff=b.dataset.d;LS.dinoColossus_Diff=diff;renderDiff()});
 renderPick();showPowers();renderDiff();
-$('go').onclick=start;$('again').onclick=()=>{if(pendTop)return;showPicker()};$('howb').onclick=()=>{showPowers();$('how').classList.remove('hide')};$('howx').onclick=()=>{stopRead();$('how').classList.add('hide')};
+$('go').onclick=start;$('howb').onclick=()=>{showPowers();$('how').classList.remove('hide')};$('howx').onclick=()=>{stopRead();$('how').classList.add('hide')};
 function showPicker(){$('end').classList.add('hide');$('board').classList.add('hide');renderPick();renderDiff();$('start').classList.remove('hide')}
 // ---- read to me (Web Speech API, works offline with the phone's built-in voice) ----
 const SS=window.speechSynthesis;let rdOn=false;
@@ -268,17 +269,21 @@ function buildIni(){const w=$('iniCols');w.innerHTML='';ini.forEach((v,k)=>{cons
  const L=document.createElement('div');L.className='L';L.textContent=String.fromCharCode(65+v);
  const dn=document.createElement('button');dn.type='button';dn.textContent='▼';dn.className='dn';dn.setAttribute('aria-label','letter '+(k+1)+' down');dn.onclick=()=>{ini[k]=(ini[k]+25)%26;beep(500+k*80,.05);buildIni()};c.append(up,L,dn);w.append(c)})}
 $('iniSave').onclick=()=>{if(!pendTop)return;const e=pendTop;pendTop=null;e.i=ini.map(v=>String.fromCharCode(65+v)).join('');try{LS.dinoColossus_Ini=e.i}catch(_){}const r=insertTop(e.d,{i:e.i,s:e.s,sec:e.sec,dn:e.dn});
- $('ini').classList.add('hide');$('endBoard').innerHTML='<p class="bt">🏆 TOP 10 · '+DIFFS[e.d]+'</p>'+boardHTML(e.d,r);$('again').classList.remove('hide');best=topBest(diff);$('best').textContent=best;beep(523,.12);setTimeout(()=>beep(784,.12),120);setTimeout(()=>beep(1046,.25),240)};
+ $('ini').classList.add('hide');endShowBoard(e.d,r);best=topBest(diff);$('best').textContent=best;beep(523,.12);setTimeout(()=>beep(784,.12),120);setTimeout(()=>beep(1046,.25),240)};
 function showEnd(){const d=G.diff,sc=G.score,q=qualifies(d,sc),prev=topBest(d),nb=sc>prev?'🎉 NEW HIGH SCORE! 🎉':'🏆 Best: '+Math.max(prev,sc);
  if(sc>prev){confetti(G.camX+VW/2,GY-250,90);beep(523,.15);setTimeout(()=>beep(784,.3),150)}
- $('final').textContent=sc;$('nb').textContent=nb+' ('+DIFFS[d]+')';$('endBoard').innerHTML='';$('end').classList.remove('hide');
- if(q){pendTop={d,s:sc,sec:G.cur,dn:pick};const p=(LS.dinoColossus_Ini||'AAA');ini=[0,1,2].map(k=>Math.max(0,(p.charCodeAt(k)||65)-65)%26);buildIni();$('ini').classList.remove('hide');$('again').classList.add('hide')}
- else{$('ini').classList.add('hide');$('endBoard').innerHTML='<p class="bt">🏆 TOP 10 · '+DIFFS[d]+'</p>'+boardHTML(d,-1);$('again').classList.remove('hide')}}
+ $('final').textContent=sc;$('nb').textContent=nb+' ('+DIFFS[d]+')';$('endBoard').innerHTML='';endB=null;$('endL').classList.remove('hide');$('endR').classList.add('hide');$('end').classList.remove('hide');
+ if(q){pendTop={d,s:sc,sec:G.cur,dn:pick};const p=(LS.dinoColossus_Ini||'AAA');ini=[0,1,2].map(k=>Math.max(0,(p.charCodeAt(k)||65)-65)%26);buildIni();$('ini').classList.remove('hide')}
+ else{$('ini').classList.add('hide');endShowBoard(d,-1)}}
+let endB=null;function endTitle(){return '⭐ '+endB.s+(endB.nb?' · NEW BEST!':'')}
+function endShowBoard(d,hi){endB={d,hi,run:d,s:G.score,nb:G.score>=topBest(d)&&G.score>0,t:Date.now()};$('endL').classList.add('hide');$('endR').classList.remove('hide');renderEndBoard()}
+function renderEndBoard(){$('endBoard').innerHTML=boardHTML(endB.d,endB.d===endB.run?endB.hi:-1,endTitle())}
+$('end').addEventListener('click',e=>{if(pendTop||!endB||$('endR').classList.contains('hide'))return;const b=e.target.closest('.tabs button[data-d]');if(b){endB.d=b.dataset.d;renderEndBoard();return}if(Date.now()-endB.t<700)return;showPicker()});
 function end(){if(!G.running)return;G.running=false;const prev=topBest(G.diff),nb=G.score>prev?'🎉 NEW HIGH SCORE! 🎉':'🏆 Best: '+Math.max(prev,G.score);
  $('starth').textContent='Pick a new dino!';$('lastrun').innerHTML='Last run ('+DIFFS[G.diff]+'): ⭐ <b>'+G.score+'</b> (Section '+G.cur+') · '+nb;$('lastrun').classList.remove('hide');$('go').textContent='PLAY AGAIN';showEnd()}
-let boardD='medium';function showBoard(){$('boardList').innerHTML=boardHTML(boardD,-1);document.querySelectorAll('#bdiffs button').forEach(b=>{const on=b.dataset.d===boardD;b.style.borderColor=on?'#fff':'transparent';b.style.background=on?'#2e7d32':'#0004'})}
-$('topb').onclick=()=>{boardD=diff;showBoard();$('board').classList.remove('hide')};$('boardx').onclick=()=>$('board').classList.add('hide');
-$('bdiffs').addEventListener('click',e=>{const b=e.target.closest('button[data-d]');if(!b)return;boardD=b.dataset.d;showBoard()});
+let boardD='medium',boardT=0;function showBoard(){$('boardList').innerHTML=boardHTML(boardD,-1)}
+$('topb').onclick=()=>{boardD=diff;showBoard();boardT=Date.now();$('board').classList.remove('hide')};
+$('board').addEventListener('click',e=>{const b=e.target.closest('.tabs button[data-d]');if(b){boardD=b.dataset.d;showBoard();return}if(Date.now()-boardT<300)return;$('board').classList.add('hide')});
 // ---- draw ----
 function belMeter(x,y){const c=cap(),w=Math.max(70,Math.min(150,VW/4-46)),h=10,by=y+18,st=G.inBonus?Math.min(1,stageOf(G.belly)):stageOf(G.belly),SC=['#8bc34a','#ffa726','#e040fb'];
  pxText('BELLY',x,y,14,'#fff');pxText(G.belly+'/'+c,x+56,y+1,12,G.belly>=c?'#ffea00':'#fff');pxText(STAGE_N[st],x,y+32,12,SC[st]);
