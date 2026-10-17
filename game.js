@@ -17,6 +17,7 @@ const BIOMES=[{n:'Jungle',sky:'#5c94fc',top:'#5a9e2f',stone:'#a0612c',dark:'#5c3
  {n:'Volcanic',sky:'#c4766a',top:'#5b5b5b',stone:'#3d3d3d',dark:'#1d1d1d',hill:'#6b4a4a',d:['bone','shroom','fern','cycad']}];
 let W,H,S,VW,VH,OY,WY=0,portrait;
 // landscape: zoomed-in view, ground band = bottom 30% of the screen (touch buttons live there)
+const BIG_SPD=4.1,BIG_CHANCE=.5; // big people-eater: a bit faster than your 3.5 run; at most one per section, ~half the sections (never section 1)
 const LVH=285,BVH=440,GBAND=.3;let ZK=0; // normal levels zoomed in (285 world px tall); boss fights zoom out (440) smoothly
 function layout(){W=cv.width=innerWidth;H=cv.height=innerHeight;portrait=H>W;const hud=44,ctrl=portrait?150:0;
  view();
@@ -112,7 +113,7 @@ function genSection(n,x0){let b;do{b=pickA(BIOMES)}while(G.lastBiome&&b.n==G.las
  for(let i=0;i<RI(4,6);i++){const c=pickA(CRIT),p=onG(c.w,c.h);G.critters.push({...p,w:c.w,h:c.h,k:c.k,sc:c.s,vx:pickA([-.5,.5]),vy:0})}
  for(let i=0;i<5+Math.min(6,n);i++){const p=onG(26,22);G.littles.push({...p,w:26,h:22,vx:-.8,vy:0,c:RI(0,3)})}
  for(let i=0;i<Math.min(5,1+(n>>1));i++){const p=onG(24,34);if(p.x>x0+T*12)G.rangers.push({...p,w:24,h:34,vx:.8,vy:0,stun:0})}
- for(let i=0;i<(n>1?2:1);i++){const p=onG(56,60);if(p.x>x0+T*16)G.bigs.push({...p,w:56,h:60,vx:-.6,vy:0,f:-1,chomp:0,ate:0})}
+ const gsB=gs.filter(g=>g.top>=GY-1&&g.w>=T*4);for(let i=0;i<(n>1&&Math.random()<BIG_CHANCE?1:0);i++){const gg=pickA(gsB.length?gsB:gs),p={x:R(gg.x+4,gg.x+Math.max(8,gg.w-60)),y:gg.top-60};if(p.x>x0+T*16)G.bigs.push({...p,w:56,h:60,vx:-.6,vy:0,f:-1,chomp:0,ate:0,bcd:0})}
  for(let i=0;i<6;i++){const g=pickA(gs);G.pel.push({x:R(g.x+10,g.x+g.w-10),y:g.top-70})}
  if(Math.random()<.35){const g=pickA(gs);G.gemsW.push({x:g.x+g.w/2,y:g.top-60})}
  for(let i=0;i<16;i++)G.deco.push({x:R(x0,end),e:pickA(b.d),s:pickA([2,3])});for(let i=0;i<3;i++){const gg=pickA(gs.filter(q=>q.top==GY&&q.w>=T*4)||gs);if(gg)G.deco.push({x:gg.x+R(10,gg.w-60),e:pickA(['hut','fire','hut']),s:3,front:1})}
@@ -125,7 +126,8 @@ function enterSec(s){G.cur=s.n;G.secBanner={t:'SECTION '+s.n+' · '+s.biome.n,l:
 const cap=()=>(MAXB+Math.min(6,Math.floor(G.eaten/20)))*(G.bigSec===G.cur?2:1);
 const stageOf=n=>n>=ROLL_AT?2:n>=FAT_AT?1:0,STAGE_N=['HUNGRY','FAT','ROLL!'];
 function hud(){$('score').textContent=G.score;$('hearts').textContent=G.hearts>5?'❤️x'+G.hearts:'❤️'.repeat(Math.max(0,G.hearts));$('belly').textContent='😋'+G.belly+'/'+cap();const s=curSec(G.d.x);$('goal').textContent=carn()?'🦎'+s.ate+'/'+s.goal:'';$('gems').textContent=gems;$('sec').textContent=G.inBonus?'★':G.cur}
-function msg(t,x,y,c='#fff'){G.msgs.push({t,x,y,l:1,c})}
+function msg(t,x,y,c='#fff'){const o=G.msgs.find(m=>m.t===t&&Math.abs(m.x-x)<120);if(o){if(o.l<.7){o.l=.9;o.x=x;o.y=y}return}G.msgs.push({t,x,y,l:.9,c});while(G.msgs.length>5)G.msgs.shift()}
+function poof(x,y,n=8){for(let i=0;i<n;i++){const a=i/n*6.283;G.smoke.push({x,y,vx:Math.cos(a)*1.6,vy:Math.sin(a)*1.2-.4,r:7,l:.55})}for(let i=0;i<8;i++)G.parts.push({x,y,vx:R(-3,3),vy:R(-5,-1),l:.6,r:3,c:pickA(['#fff','#ffea00'])});beep(520,.06,'square',1040);setTimeout(()=>beep(880,.08,'sine',1320),60)}
 // ---- powers ----
 function UNL(k){if(unl[k])return;unl[k]=1;LS.dinoColossus_Unlocks=JSON.stringify(unl);G.banner={t:'🔓 UNLOCKED! '+POWERS[k].e+' '+POWERS[k].n,l:2.5};G.pwSel=k;confetti(G.camX+VW/2,GY-200,50);beep(523,.15);setTimeout(()=>beep(659,.15),150);setTimeout(()=>beep(1046,.35),300);updPw();showPowers()}
 function saveStats(){LS.dinoColossus_Stats=JSON.stringify(stats);if(stats.eaten>=25)UNL('speed');if(stats.erupts>=4)UNL('big')}
@@ -161,7 +163,7 @@ const CHALLENGES={
    r.vx=tg?Math.sign(tg.x-r.x)*(2.4+c.lvl*.3):0;r.f=r.vx<0?-1:1;if(r.on){const ax=r.x+(r.vx>0?r.w+8:-8);if(!solidBelow(ax,r.y+r.h+2)||r.hitWall)r.vy=JV}moveBody(r);if(r.y>GY+300){r.x=G.camX+VW-60;r.y=GY-200;r.vy=0}
    for(let i=G.people.length-1;i>=0;i--)if(ov(r,G.people[i])){G.people.splice(i,1);c.riv++;r.ate++;beep(200,.08)}
    if(ov(r,G.d)&&G.d.h>r.h*1.08&&!(G.d.vy>0&&G.d.y+G.d.h-r.y<16)){const n=r.ate;for(let i=0;i<n;i++)G.people.push({x:r.x+R(-20,40),y:r.y-20,w:18,h:26,vx:R(-3,3),vy:-5,e:pickA(PEOPLE),v:RI(0,5)});if(G.belly<cap())eat();c.riv=0;c.you+=1;G.score+=150;msg('You ate the smaller rival! +150',r.x,r.y-30,'#ffea00');G.rival=null;c.t=.01;return}
-   if(ov(r,G.d)){if(G.d.vy>0&&G.d.y+G.d.h-r.y<16){r.dizzy=2;G.d.vy=-8;msg('Stomp! Rival drops '+r.ate,r.x,r.y-30,'#ffea00');for(let i=0;i<r.ate;i++)G.people.push({x:r.x+R(-20,40),y:r.y-20,w:18,h:26,vx:R(-3,3),vy:-5,e:pickA(PEOPLE)});c.riv=Math.max(0,c.riv-r.ate);r.ate=0;beep(900,.15,'square',300)}}},
+   if(ov(r,G.d)){if(G.d.vy>0&&G.d.y+G.d.h-r.y<16){poof(r.x+r.w/2,r.y+r.h/2);r.dizzy=2;G.d.vy=-8;msg(r.ate?'Stomp! Rival drops '+r.ate:'Stomp! Rival dizzy!',r.x,r.y-30,'#ffea00');for(let i=0;i<r.ate;i++)G.people.push({x:r.x+R(-20,40),y:r.y-20,w:18,h:26,vx:R(-3,3),vy:-5,e:pickA(PEOPLE)});c.riv=Math.max(0,c.riv-r.ate);r.ate=0;beep(900,.15,'square',300)}}},
   finish(c){if(c.you>c.riv){const b=150*c.lvl;G.score+=b;msg('You beat the rival! +'+b,G.d.x,G.d.y-70,'#ffea00')}else msg('Rival wins this time!',G.d.x,G.d.y-70);G.rival=null}},
  lava:{name:'LAVA FLOW!',dur:13,start(c){c.next=1.6;beep(50,1.2,'sawtooth',35);G.shake=25;msg('Rumble rumble…',G.d.x,G.d.y-60,'#ffab40')},update(c){c.next-=1/60;if(c.next<=0){c.next=Math.max(1.6,3.2-c.lvl*.4);G.lava.push({x:G.camX+VW+10,w:Math.min(90,R(36,56)+c.lvl*10),vx:-(1.4+c.lvl*.3),ph:0})}}}
 };
@@ -186,7 +188,7 @@ function startBoss(){if(!G.running||G.boss||G.inBonus)return;const T0=BOSSES[G.b
  const b={T:T0,w:T0.w,h:T0.h,hp:T0.hp+2*Math.floor((G.bossN-1)/3),vuln:0,bonked:0,say:''};b.max=b.hp;b.inv=0;T0.init(b);G.boss=b;G.banner={t:T0.name+'!',l:2};G.bossHint={t:'GRAB THE FALLING WEAPONS! DODGE THE BOSS!',l:5.5};G.drops=[];G.bitems=[];G.pshots=[];G.bshots=[];G.held=null;G.dropT=2;b.thT=THROW[G.diff].every+1;updAtk();say('Grab the falling weapons! Dodge the boss!');beep(300,.2);setTimeout(()=>beep(200,.4),200)}
 function updBoss(){const b=G.boss,d=G.d;if(b.gone){b.x+=7;b.y-=2;if(b.x>G.camX+AW()+200){G.boss=null;G.drops=[];G.bitems=[];G.pshots=[];G.bshots=[];G.held=null;updAtk();G.solids=G.solids.filter(s=>!G.arena.includes(s));const ax=G.camX+AW()+40;G.arenaW=0;if(G.bossStash)for(const k in G.bossStash)G[k]=G[k].concat(G.bossStash[k].filter(o=>o.x>ax));G.bossStash=null;G.arena=null}return}
  b.T.act(b);bossArms(b);if(b.inv)b.inv--;if(b.vuln){b.vuln-=1/60;if(b.vuln<=0){b.vuln=0;b.bonked=0;b.say=''}}
- if(ov(d,b)){const top=d.vy>0&&d.y+d.h-b.y<Math.max(26,b.h*.45);if(top){d.vy=-10;d.y=b.y-d.h;if(!b.inv)hitBoss(b,'BONK!');else msg('Boing!',b.x+b.w/2,b.y-10)}
+ if(ov(d,b)){const top=d.vy>0&&d.y+d.h-b.y<Math.max(26,b.h*.45);if(top){d.vy=-10;d.y=b.y-d.h;if(!b.inv)hitBoss(b,'BONK!')}
   else if(G.roll&&Math.abs(d.vx)>3&&!b.inv){hitBoss(b,'SPIN ATTACK!');d.vx=-Math.sign(d.vx)*6;d.vy=-6}
   else if(!b.vuln&&!G.hit&&!b.inv){hurt('Ouch!');knock({x:b.x+b.w/2})}else if(!G.push)knock({x:b.x+b.w/2})}}
 function hitBoss(b,t,dmg,force){if(b.gone||(b.inv&&!force))return;b.bonked=1;b.hp=Math.max(0,b.hp-(dmg||1));b.inv=45;b.vuln=Math.min(b.vuln||.5,.5);G.bossHint=null;G.shake=10;beep(900,.15,'square',300);msg(t,b.x+b.w/2,b.y-20,'#ffea00');
@@ -259,27 +261,33 @@ function update(){const d=G.d;{const zt=G.boss&&!G.boss.gone?1:0;if(Math.abs(zt-
  for(let i=G.people.length-1;i>=0;i--){const p=G.people[i];if(p.bowl){p.bowl--;continue}if(!G.hit&&ov(d,p)){if(G.belly<cap()){G.people.splice(i,1);eat();if(G.ch&&G.ch.k=='rival')G.ch.you++;msg(G.roll?'Spin-gulp!':'Gulp!',d.x+17,d.y-10)}else if(G.roll&&Math.abs(d.vx)>2)bowl(p)}}
  // little dinos (goombas)
  for(let i=G.littles.length-1;i>=0;i--){const l=G.littles[i];if(!vis(l))continue;if(l.on){const ax=l.x+(l.vx>0?l.w+2:-2);if(!solidBelow(ax,l.y+l.h+2))l.vx=-l.vx}moveBody(l);if(l.hitWall)l.vx=-l.vx;if(l.y>GY+300){G.littles.splice(i,1);continue}
-  if(ov(d,l)&&!G.hit){if(d.vy>0&&d.y+d.h-l.y<16){G.littles.splice(i,1);d.vy=-7;G.score+=20;msg('Stomp! +20',l.x,l.y-10,'#fff');squash(l);beep(700,.08,'square',200);hud()}
+  if(ov(d,l)&&!G.hit){if(d.vy>0&&d.y+d.h-l.y<16){G.littles.splice(i,1);d.vy=-7;G.score+=20;msg('Stomp! +20',l.x,l.y-10,'#fff');squash(l);poof(l.x+13,l.y+11);beep(700,.08,'square',200);hud()}
    else if(carn()){G.littles.splice(i,1);const s=curSec(l.x);s.ate++;if(G.belly<cap())eat();else hud();msg('Chomp! 🦎',l.x,l.y-10,'#c6ff00');if(s.ate==s.goal){msg('Dino goal done! ✅',d.x,d.y-60,'#ffea00');beep(784,.2)}}
    else{knock(l);G.hit=30;msg('Bonk! (stomp it!)',d.x,d.y-30)}}}
  // critters (edible animals)
  for(let i=G.critters.length-1;i>=0;i--){const c=G.critters[i];if(!vis(c))continue;if(Math.abs(c.x-d.x)<120&&Math.abs(c.y-d.y)<100)c.vx=Math.sign(c.x-d.x||1)*1.3;else if(Math.random()<.01)c.vx=pickA([-.5,.5]);if(c.on){const ax=c.x+(c.vx>0?c.w+2:-2);if(!solidBelow(ax,c.y+c.h+2))c.vx=-c.vx}moveBody(c);if(c.hitWall)c.vx=-c.vx;if(c.y>GY+300){G.critters.splice(i,1);continue}
-  if(c.bowl){c.bowl--;continue}if(ov(d,c)&&G.roll&&G.belly>=cap()&&!G.hit&&Math.abs(d.vx)>2){bowl(c);continue}if(ov(d,c)&&G.belly<cap()&&!G.hit){G.critters.splice(i,1);eat();msg({liz:'Crunchy lizard!',dodo:'Gobbled a dodo!',mammoth:'Baby mammoth! Yum',bug:'Big bug! Crunch'}[c.k],c.x,c.y-10,'#c6ff00')}}
+  if(c.bowl){c.bowl--;continue}if(ov(d,c)&&!G.hit&&d.vy>0&&d.y+d.h-c.y<16){G.critters.splice(i,1);d.vy=-7;poof(c.x+c.w/2,c.y+c.h/2);if(G.belly<cap()){eat();msg('Stomp & gulp!',c.x,c.y-10,'#c6ff00')}else{G.score+=20;hud();msg('Stomp! +20',c.x,c.y-10,'#fff')}continue}if(ov(d,c)&&G.roll&&G.belly>=cap()&&!G.hit&&Math.abs(d.vx)>2){bowl(c);continue}if(ov(d,c)&&G.belly<cap()&&!G.hit){G.critters.splice(i,1);eat();msg({liz:'Crunchy lizard!',dodo:'Gobbled a dodo!',mammoth:'Baby mammoth! Yum',bug:'Big bug! Crunch'}[c.k],c.x,c.y-10,'#c6ff00')}}
  // timed surprises
  if(G.sjump)G.sjump--;if(G.magnet){G.magnet--;if(G.el%.2<1/60)for(let i=0;i<2;i++)G.parts.push({x:d.x+d.w/2+R(-90,90),y:d.y+R(-30,30),vx:0,vy:0,l:.4,r:2,c:'#e040fb'})}if(G.star)G.star--;
  if(G.buddy){const u=G.buddy;u.t--;let tg=null,bd=170;for(const p of G.people){const q=Math.hypot(p.x-u.x,p.y-u.y);if(q<bd){bd=q;tg=p}}const gx=tg?tg.x:d.x-d.f*40;u.vx=Math.max(-4.5,Math.min(4.5,(gx-u.x)*.08));u.f=u.vx<0?-1:1;moveBody(u);if(u.on&&(u.hitWall||(tg&&tg.y<u.y-10)))u.vy=-8;if(u.y>GY+200){u.x=d.x;u.y=d.y-20;u.vy=0}
   if(u.cd>0)u.cd--;else for(let i=G.people.length-1;i>=0;i--){const p=G.people[i];if(ov(u,p)){G.people.splice(i,1);u.cd=25;u.ate++;if(G.belly<cap())eat();else{G.score+=20;hud()}msg('Buddy nom!',u.x+10,u.y-10,'#b2ff59');break}}
   if(u.t<=0){msg('Bye bye, buddy!',u.x,u.y-20,'#fff');G.buddy=null}}
  // big dinos: harmless food rivals that gobble the people in front of you
- for(const g of G.bigs){if(!vis(g))continue;if(g.chomp>0){g.chomp--;g.vx=0}else{let tg=null,bd=280;for(const p of G.people){const q=Math.abs(p.x-g.x-g.w/2);if(q<bd&&Math.abs(p.y-g.y)<90&&!p.bowl){bd=q;tg=p}}
-   g.vx=tg?Math.sign(tg.x+9-(g.x+g.w/2))*1.15:(Math.abs(g.vx)>.3?Math.sign(g.vx)*.6:-.6)}if(g.vx)g.f=g.vx<0?-1:1;
-  if(g.on&&g.vx){const ax=g.x+(g.vx>0?g.w+2:-2);if(!solidBelow(ax,g.y+g.h+2))g.vx=-g.vx}moveBody(g);if(g.hitWall)g.vx=-g.vx;
-  if(g.chomp<=0)for(let i=G.people.length-1;i>=0;i--){const p=G.people[i];if(!p.bowl&&ov(g,p)){G.people.splice(i,1);g.chomp=40;g.ate++;G.noms.push({x:p.x,y:p.y,g,t:0,v:p.v||0});msg('NOM!',g.x+g.w/2,g.y-14,'#ffab91');beep(150,.09,'square',80);setTimeout(()=>beep(120,.08,'square',70),110);break}}
-  if(ov(d,g)&&d.vy>0&&d.y+d.h-g.y<20){d.vy=-10;msg('Boing!',g.x+g.w/2,g.y-10,'#fff');beep(600,.08,'sine',900)}}
+ for(const g of G.bigs){if(g.x<G.camX-250||g.x>G.camX+VW+450)continue;if(g.bcd>0)g.bcd--;
+  if(g.chomp>0){g.chomp--;if(g.on)g.vx=0}else if(g.on){let tg=null,bd=700;for(const p of G.people){const q=Math.abs(p.x+9-(g.x+g.w/2));if(q<bd&&Math.abs(p.y+p.h-(g.y+g.h))<150&&!p.bowl){bd=q;tg=p}}
+   // roam: chase the nearest person; with nobody near, stroll toward the area just ahead of the player
+   const gx=tg?tg.x+9:d.x+d.w/2+(d.f>=0?260:-260);g.vx=Math.abs(gx-(g.x+g.w/2))<6?0:Math.sign(gx-(g.x+g.w/2))*(tg?BIG_SPD:1.6);
+   if(g.vx){const ax=g.x+(g.vx>0?g.w+4:-4);if(!solidBelow(ax,g.y+g.h+2)){const gt=groundTop(ax);if(gt==null){const far=groundTop(ax+Math.sign(g.vx)*110);if(far!=null){g.vy=-10.5;g.vx=Math.sign(g.vx)*BIG_SPD}else g.vx=0}}
+    else if(tg&&tg.y+tg.h<g.y+g.h-40&&Math.abs(tg.x-g.x)<70)g.vy=-10}}
+  if(g.vx)g.f=g.vx<0?-1:1;const wx=g.vx;moveBody(g);if(g.hitWall&&g.on){g.vy=-10.5;g.vx=wx}
+  if(g.y>GY+200){const t=groundTop(d.x+VW*.6);g.x=d.x+VW*.6;g.y=(t==null?GY:t)-g.h-40;g.vy=0}
+  if(g.chomp<=0)for(let i=G.people.length-1;i>=0;i--){const p=G.people[i];if(!p.bowl&&ov(g,p)){G.people.splice(i,1);g.chomp=24;g.ate++;G.noms.push({x:p.x,y:p.y,g,t:0,v:p.v||0});msg('NOM!',g.x+g.w/2,g.y-14,'#ffab91');beep(150,.09,'square',80);setTimeout(()=>beep(120,.08,'square',70),110);break}}
+  // landing on a big dino: one soft bounce, then slide off. No hurt, no text, no loop.
+  if(ov(d,g)&&d.vy>0&&d.y+d.h-g.y<24){const side=(d.x+d.w/2<g.x+g.w/2)?-1:1;if(!(g.bcd>0)){g.bcd=50;d.y=g.y-d.h;d.vy=-6;d.x+=side*6;beep(300,.06,'sine',200)}else{d.x+=side*7;if(d.vy>2)d.vy=2}}}
  G.bigs=G.bigs.filter(g=>g.y<GY+300);G.noms=G.noms.filter(n=>++n.t<22);
  // rangers
  for(const r of G.rangers){if(!vis(r))continue;if(r.stun){r.stun--;r.vx=0}else{const dx=d.x-r.x;if(G.belly&&Math.abs(dx)<260)r.vx=Math.sign(dx)*1.5;else if(!r.vx||Math.random()<.005)r.vx=pickA([-.8,.8]);if(r.on){const ax=r.x+(r.vx>0?r.w+2:-2);if(!solidBelow(ax,r.y+r.h+2))r.vx=-r.vx}}moveBody(r);if(r.hitWall)r.vx=-r.vx;
-  if(ov(d,r)&&!G.hit){if(d.vy>0&&d.y+d.h-r.y<18){d.vy=-8;if(r.stun){msg('Boing!',r.x,r.y-10)}else{hurt('Ouch! Pointy spear!');msg('Spear points up! Jump OVER them.',r.x+12,r.y-30,'#ff8a80')}}else if(!r.stun){if(G.belly)dropLoad();else G.hit=30;knock(r)}}}
+  if(ov(d,r)&&!G.hit){if(d.vy>0&&d.y+d.h-r.y<18){d.vy=-8;if(r.stun){poof(r.x+12,r.y+r.h/2);G.score+=50;hud();msg('Knocked out! +50',r.x,r.y-30,'#ffea00');r.y=GY+999}else{hurt('Ouch! Pointy spear!');msg('Spear points up! Jump OVER them.',r.x+12,r.y-30,'#ff8a80')}}else if(!r.stun){if(G.belly)dropLoad();else G.hit=30;knock(r)}}}
  G.rangers=G.rangers.filter(r=>r.y<GY+300);
  // boulders
  if(!G.boss&&!G.inBonus&&(G.boulT-=1/60)<=0){G.boulT=R(6,10)-Math.min(3,G.cur*.3);const x=G.camX+VW+20,t=groundTop(x);if(t!=null)G.boulders.push({x,y:t-28,w:28,h:28,vx:-2.6,vy:0,a:0})}
@@ -309,7 +317,7 @@ function update(){const d=G.d;{const zt=G.boss&&!G.boss.gone?1:0;if(Math.abs(zt-
   if(f.chute&&t!=null&&f.y>=t-26){G.safe.push({x:f.x,y:t-26,vx:pickA([-1.6,1.6]),v:f.v,t:0});return false}return f.y<GY+400});
  G.safe=G.safe.filter(q=>{q.t++;const nx=q.x+q.vx,gt=groundTop(nx+(q.vx>0?18:0));if(gt==null||Math.abs(gt-(q.y+26))>2)q.vx=-q.vx;else q.x=nx;return q.t<720&&q.x>G.camX-80&&q.x<G.camX+VW+80});
  G.parts=G.parts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.l-=.02;return p.l>0});G.smoke=G.smoke.filter(m=>{m.x+=m.vx;m.y+=m.vy;m.r+=.4;m.l-=.008;return m.l>0});
- G.msgs=G.msgs.filter(m=>{m.y-=.7;m.l-=.015;return m.l>0});if(G.shake)G.shake--;if(G.flash)G.flash=Math.max(0,G.flash-.02);
+ G.msgs=G.msgs.filter(m=>{m.y-=.7;m.l-=.02;return m.l>0});if(G.shake)G.shake--;if(G.flash)G.flash=Math.max(0,G.flash-.02);
  if(G.burst){const b=G.burst;b.r+=(b.max-b.r)*.15;b.l-=.03;if(b.l<=0)G.burst=null}
  for(const k of['banner','secBanner','bossHint'])if(G[k]&&(G[k].l-=1/60)<=0)G[k]=null;
  if(G.el%0.25<1/60){$('score').textContent=G.score;updPw()}}
@@ -411,7 +419,7 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ct
  for(const r of G.rangers){spr(SPR.ranger,Math.round(r.x),Math.round(r.y-0.5),2.8,r.vx<0);if(r.stun)spr(SPR.star,r.x+4,r.y-14,2);else{const f=r.vx<0?-1:1,sx=r.x+(f<0?-4:24);ctx.fillStyle='#6d4c2e';ctx.fillRect(f<0?sx-24:sx,r.y+12,28,3);ctx.fillStyle='#9e9e9e';const tx=f<0?sx-30:sx+28;ctx.fillRect(tx,r.y+10,6,7);ctx.fillStyle='#e0e0e0';ctx.fillRect(f<0?tx:tx+3,r.y+12,3,3)}}
  for(const bo of G.boulders){ctx.save();ctx.translate(bo.x+14,bo.y+14);ctx.rotate(Math.round(bo.a/(Math.PI/2))*(Math.PI/2));spr(SPR.boulder,-14,-14,3.5);ctx.restore()}
  for(const g of G.bigs){if(g.x<G.camX-80||g.x>G.camX+VW+80)continue;const ch=g.chomp>0,bob=ch?Math.round(Math.sin(g.chomp*.6)*3):0,c=SPR.bigDino[ch?((g.chomp>>2)%2):(g.vx?fr:0)],sc=3.75;
-  spr(c,Math.round(g.x+g.w/2-c.width*sc/2),Math.round(g.y+g.h-c.height*sc+bob),sc,g.f<0);if(ch&&g.chomp>24){ctx.fillStyle='#fff';ctx.fillRect(g.x+(g.f>0?g.w-4:-4),g.y+6+bob,6,6)}}
+  spr(c,Math.round(g.x+g.w/2-c.width*sc/2),Math.round(g.y+g.h-c.height*sc+bob),sc,g.f<0);if(ch&&g.chomp>12){ctx.fillStyle='#fff';ctx.fillRect(g.x+(g.f>0?g.w-4:-4),g.y+6+bob,6,6)}}
  for(const n of G.noms){const g=n.g,k=n.t/22,mx=g.x+(g.f>0?g.w-8:8),my=g.y+12,x=n.x+(mx-n.x)*k,y=n.y+(my-n.y)*k-Math.sin(k*Math.PI)*16;ctx.globalAlpha=1-k*.6;spr(SPR.person[n.v][0],Math.round(x),Math.round(y),2.2*(1-k*.7));ctx.globalAlpha=1}
  if(G.rival){const r=G.rival;spr(SPR.rival[r.vx?fr:0],Math.round(r.x-4),Math.round(r.y-6),2.6,r.f<0);if(r.dizzy>0)spr(SPR.star,r.x+8,r.y-18,2)}
  const b=G.boss;if(b){if(b.tele&&!b.vuln)pxText('!',b.x+b.w/2,b.y-40,30,'#ff1744','center');let c,sc;if(b.T.e=='🦅'){c=SPR.ptero[(G.el*6|0)%2];sc=4.5}else if(b.T.e=='🦕'){c=SPR.bossBronto[b.vuln?0:fr];sc=9.4}else{c=SPR.bossRex[b.vx?fr:0];sc=8}
@@ -464,4 +472,4 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ct
  if(G.banner)tc(G.banner.t.replace(/[^\x20-\x7E]/g,'').trim().toUpperCase(),VH*.36,26,'#ffea00');
  ctx.restore()}
 let acc=0,last=0;function loop(t){const dt=Math.min(100,t-last||16);last=t;acc+=dt;while(acc>=16.67){if(G.running)update();else if(G.parts)G.parts=G.parts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.l-=.01;return p.l>0});acc-=16.67}draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
-window.__dc={useAtk,ITEMS,THROW,hurt,say,loadTop,insertTop,qualifies,topBest,showEnd,readLines,pickVoice,stageOf,STAGES:{FAT_AT,ROLL_AT,FAT_SPD,FAT_JMP,ROLL_JMP,ROLL_MAX,ROLL_ACC,ROLL_FRIC,ROLL_CAP},get G(){return G},get CHALLENGES(){return CHALLENGES},CRIT,get diff(){return diff},get ORDER(){return ORDER},loseLife,mystery,GOOD,BAD,start,startChallenge,startBoss,enterBonus,exitBonus,UNL,usePower,erupt,cap,genSection,groundTop,get unl(){return unl},get pick(){return pick},consts:{T,GY,JV,GRAV,SPD,SEC_L},secLen,get view(){return {S,VW,VH,WY,OY,ZK,AW:AW()}}};
+window.__dc={BIG_SPD,BIG_CHANCE,poof,msg,useAtk,ITEMS,THROW,hurt,say,loadTop,insertTop,qualifies,topBest,showEnd,readLines,pickVoice,stageOf,STAGES:{FAT_AT,ROLL_AT,FAT_SPD,FAT_JMP,ROLL_JMP,ROLL_MAX,ROLL_ACC,ROLL_FRIC,ROLL_CAP},get G(){return G},get CHALLENGES(){return CHALLENGES},CRIT,get diff(){return diff},get ORDER(){return ORDER},loseLife,mystery,GOOD,BAD,start,startChallenge,startBoss,enterBonus,exitBonus,UNL,usePower,erupt,cap,genSection,groundTop,get unl(){return unl},get pick(){return pick},consts:{T,GY,JV,GRAV,SPD,SEC_L},secLen,get view(){return {S,VW,VH,WY,OY,ZK,AW:AW()}}};
