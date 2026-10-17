@@ -47,5 +47,10 @@ const FIRE=["...Y....","..YOY.Y.",".YORY.YO","..ORROR.",".WDWDWD.","DWDWDWDW"];
 const BONE=["WW....WW","WWWWWWWW","WW....WW"];
 const CAVE=["...SSSSSS...","..SSKKKKSS..",".SSKKKKKKSS.","SSKKKKKKKKSS","SKKKKKKKKKKS","SKKKKKKKKKKS"];
 function buildDeco(){SPR.fern=mkSpr(FERN,{G:'#2e9d3a',D:'#5d4037'});SPR.cycad=mkSpr(CYCAD,{G:'#3fae49',D:'#6d4c2e',B:'#8d6e48'});SPR.shroom=mkSpr(SHROOM,{R:'#d84343',W:'#ffffff',S:'#f3e5c8'});SPR.hut=mkSpr(HUT,{B:'#6d4c2e',Y:'#d9b26a',W:'#a1887f',K:'#3e2723'});SPR.fire=mkSpr(FIRE,{Y:'#ffeb3b',O:'#ff9800',R:'#e53935',W:'#8d6e63',D:'#5d4037'});SPR.bone=mkSpr(BONE,{W:'#f5f0e1'});SPR.cave=mkSpr(CAVE,{S:'#6d6d6d',K:'#111111'})}
-buildSprites();buildDeco();
+const LIZ=["..........GG..",".GG.....GGWKG.","GGGGGGGGGGGGG.","...GGGGGGGG...","...G.G..G.G..."];
+const DODO=["..BBB...",".BBWKY..",".BBBBYY.","BBBBBB..","BBBBBBB.",".BBBBB..","..Y.Y...",".YY.YY.."];
+const MAMMOTH=["...BBBBBBB..","..BBBBBBBBB.",".BBBBBBBWKBB","BBBBBBBBBBBB","BBBBBBBBBTBT","BBBBBBBB.B.T",".BB.BB...B..",".BB.BB......"];
+const BUG=["K......K",".K.GG.K.","..GGGG..","WGGGGGGW","WGGLGGGW",".GGGGGG.","K.G..G.K"];
+function buildCritters(){SPR.liz=mkSpr(LIZ,{G:'#7cb342',W:'#fff',K:'#000'});SPR.dodo=mkSpr(DODO,{B:'#8d99ae',W:'#fff',K:'#000',Y:'#fbc02d'});SPR.mammoth=mkSpr(MAMMOTH,{B:'#8d5a3b',W:'#fff',K:'#000',T:'#fff8e1'});SPR.bug=mkSpr(BUG,{G:'#43a047',L:'#a5d6a7',W:'#e1f5fe',K:'#1b1b1b'})}
+buildSprites();buildDeco();buildCritters();
 function spr(c,x,y,s,flip){ctx.save();ctx.imageSmoothingEnabled=false;if(flip){ctx.translate(x+c.width*s,y);ctx.scale(-1,1);ctx.drawImage(c,0,0,c.width*s,c.height*s)}else ctx.drawImage(c,x,y,c.width*s,c.height*s);ctx.restore()}
