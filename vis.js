@@ -19,18 +19,23 @@ const SOUNDS={
  chime:{url:'sounds/chime.mp3',vol:.25,synth(a,t,o){[1318,1976].forEach((fq,i)=>{const s=a.createOscillator(),g=a.createGain();s.type='sine';s.frequency.value=fq;g.gain.setValueAtTime(0,t+i*.06);g.gain.linearRampToValueAtTime(.5,t+i*.06+.01);g.gain.exponentialRampToValueAtTime(.001,t+i*.06+.3);s.connect(g).connect(o);s.start(t+i*.06);s.stop(t+i*.06+.32)})},len:.4},
  cheer:{url:'sounds/cheer.mp3',vol:.35,synth(a,t,o){[523,659,784,1046,1318].forEach((fq,i)=>{const s=a.createOscillator(),g=a.createGain(),tt=t+i*.09;s.type='triangle';s.frequency.value=fq;g.gain.setValueAtTime(0,tt);g.gain.linearRampToValueAtTime(.5,tt+.01);g.gain.exponentialRampToValueAtTime(.001,tt+(i==4?.6:.2));s.connect(g).connect(o);s.start(tt);s.stop(tt+.62)});noise(a,t+.3,.5,.08,3000,o)},len:1},
  sparkle:{url:'sounds/sparkle.mp3',vol:.3,synth(a,t,o){[1760,2349,2637].forEach((fq,i)=>{const s=a.createOscillator(),g=a.createGain(),tt=t+i*.05;s.type='sine';s.frequency.value=fq;g.gain.setValueAtTime(.4,tt);g.gain.exponentialRampToValueAtTime(.001,tt+.18);s.connect(g).connect(o);s.start(tt);s.stop(tt+.2)})},len:.35},
- // music: generated loop until a file is set. bpm = the file's own tempo (playbackRate follows game speed).
- music:{url:null,loop:true,bpm:100}
+ // v14 music: Beethoven recordings (Musopen, public domain, from Wikimedia Commons). The loop crossfade (1.5 s) is
+ // baked into each file. Real recordings play at steady pace (speeding them raises the pitch); the generated
+ // music is the backup until the file loads or if it fails, and that backup still speeds up with the game.
+ music:{url:'sounds/music-pastoral.mp3',loop:true},
+ bossmusic:{url:'sounds/music-minuet.mp3',loop:true}
 };
 function noise(a,t,d,v,fc,o){const n=Math.floor(a.sampleRate*d),b=a.createBuffer(1,n,a.sampleRate),c=b.getChannelData(0);for(let i=0;i<n;i++)c[i]=(Math.random()*2-1)*(1-i/n);const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();s.buffer=b;f.type='lowpass';f.frequency.value=fc;g.gain.value=v;s.connect(f).connect(g).connect(o);s.start(t)}
 const BUF={},SRC={};let rendering=false,master=null,musicG=null;
 function A(){try{if(!tapped)return null;return (typeof ac==='function')?ac():null}catch(e){return null}}
 function prerender(){if(rendering)return;rendering=true;const a=A();if(!a)return;const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
- for(const [k,s] of Object.entries(SOUNDS)){if(k==='music')continue;
+ for(const [k,s] of Object.entries(SOUNDS)){if(s.loop)continue;
   const synth=()=>{if(!OAC||!s.synth)return;try{const o=new OAC(1,Math.ceil(a.sampleRate*s.len),a.sampleRate);s.synth(o,0,o.destination);o.startRendering().then(b=>{if(!SRC[k]||SRC[k]==='synth'){BUF[k]=b;SRC[k]='synth'}}).catch(()=>{})}catch(e){}};
   synth(); // generated sound first, replaced by the file once it loads; stays if the file fails
   if(s.url)fetch(s.url).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((ok,no)=>{const p=a.decodeAudioData(b,ok,no);if(p&&p.catch)p.catch(no)})).then(b=>{BUF[k]=b;SRC[k]='file'}).catch(()=>{});}
- if(SOUNDS.music.url)fetch(SOUNDS.music.url).then(r=>r.arrayBuffer()).then(b=>a.decodeAudioData(b)).then(b=>BUF.music=b).catch(()=>{})}
+ for(const k of ['music','bossmusic']){SRC[k]='synth';const u=SOUNDS[k].url;if(u)fetch(u).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((ok,no)=>{const p=a.decodeAudioData(b,ok,no);if(p&&p.catch)p.catch(no)})).then(b=>{if(b.duration<5)throw 0;BUF[k]=b;LOOP[k]=edges(b);SRC[k]='file'}).catch(()=>{SRC[k]='synth'})}}
+// skip mp3 encoder padding (near-silent samples) at the edges so the loop seam has no gap
+const LOOP={};function edges(b){const c=b.getChannelData(0),n=c.length,th=.0005;let i=0,j=n-1;while(i<n&&Math.abs(c[i])<th&&i<b.sampleRate*.2)i++;while(j>i&&Math.abs(c[j])<th&&n-j<b.sampleRate*.2)j--;return [i/b.sampleRate,(j+1)/b.sampleRate]}
 function out(){const a=A();if(!a)return null;if(!master){master=a.createGain();master.gain.value=1;master.connect(a.destination);musicG=a.createGain();musicG.gain.value=.5;musicG.connect(master)}return master}
 let lastPlay={};
 function play(k,minGap){if(typeof snd!=='undefined'&&!snd)return;if(!tapped)return;const a=A();if(!a||!BUF[k])return;const now=a.currentTime;if(minGap&&lastPlay[k]&&now-lastPlay[k]<minGap)return;lastPlay[k]=now;
@@ -41,13 +46,16 @@ function bpm(){if(typeof G==='undefined'||!G.running)return 100;let b=96+Math.mi
 function note(a,t,f,d,type,v){const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(musicG);o.start(t);o.stop(t+d+.02)}
 function musicTick(){const a=A();if(!a)return;const want=st.running&&(typeof snd==='undefined'||snd)&&!document.hidden&&tapped;
  if(!want){stopMusic();return}out();
- if(BUF.music){if(!mSrc){mSrc=a.createBufferSource();mSrc.buffer=BUF.music;mSrc.loop=true;mSrc.connect(musicG);mSrc.start()}mSrc.playbackRate.value=bpm()/SOUNDS.music.bpm;return}
+ const mk=(typeof G!=='undefined'&&G.boss&&!G.boss.gone)?'bossmusic':'music';
+ if(BUF[mk]){if(!mSrc||mSrc.k!==mk){stopMusic(.6);const g=a.createGain(),s=a.createBufferSource(),[ls,le]=LOOP[mk];s.buffer=BUF[mk];s.loop=true;s.loopStart=ls;s.loopEnd=le;s.k=mk;s.g=g;
+   g.gain.setValueAtTime(0,a.currentTime);g.gain.linearRampToValueAtTime(1,a.currentTime+.6);s.connect(g).connect(musicG);s.start(a.currentTime,ls);mSrc=s}return}
+ if(mSrc)stopMusic(.3);
  if(mNext<a.currentTime)mNext=a.currentTime+.05;const spb=60/bpm()/2;
  while(mNext<a.currentTime+.25){const ch=PROG[(mStep>>3)%4],i=mStep%8,fq=k=>BASE*Math.pow(2,k/12);
   if(i%4==0)note(a,mNext,fq(ch[0])/2,spb*1.8,'triangle',.22);
   if(i%2==0||(G&&G.boss&&!G.boss.gone))note(a,mNext,fq(ch[(i>>1)%3])*2,spb*.8,'square',.035);
   mNext+=spb;mStep++}}
-function stopMusic(){if(mSrc){try{mSrc.stop()}catch(e){}mSrc=null}}
+function stopMusic(f){if(mSrc){const s=mSrc;mSrc=null;try{const a=A();if(f&&a&&s.g){const t=a.currentTime;s.g.gain.cancelScheduledValues(t);s.g.gain.setValueAtTime(s.g.gain.value,t);s.g.gain.linearRampToValueAtTime(0,t+f);s.stop(t+f+.02)}else s.stop()}catch(e){}}}
 setInterval(musicTick,90);
 function unlock(){tapped=true;const a=A();if(a&&a.state!=='running')a.resume().catch(()=>{});prerender()}
 addEventListener('pointerdown',unlock,true);addEventListener('keydown',unlock,true);
@@ -274,4 +282,4 @@ function initUI(){const $=id=>document.getElementById(id);if(!$('dress'))return;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initUI);else setTimeout(initUI,0);
 
 return {step,bgFar,fgNear,leavesDraw,fxWorld,pickupGlow,bossAura,bossBar,hudBack,hudFront,roarText,shakeOff,flashA,dinoSpr,dinoDecor,pal,sqs,wobble,starBurst,dust,play,buzz,award,cheer,setCalm,
- get calm(){return calm},get stars(){return stars},set stars(v){stars=v;saveDress()},get on(){return on},owned:()=>[...owned],SOUNDS,COLORS,HATS,GLASSES,starsFor,st,BUF,SRC,get tapped(){return tapped},bpm,openDress}})();
+ get calm(){return calm},get stars(){return stars},set stars(v){stars=v;saveDress()},get on(){return on},owned:()=>[...owned],SOUNDS,COLORS,HATS,GLASSES,starsFor,st,BUF,SRC,get tapped(){return tapped},LOOP,get mKey(){return mSrc?mSrc.k:null},bpm,openDress}})();

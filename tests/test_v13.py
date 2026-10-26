@@ -29,7 +29,7 @@ try:
   check(not pg.errs,f'no console errors {pg.errs}');cx.close()
   # 2 files load offline from SW cache
   cx=b.new_context(viewport={'width':915,'height':412},has_touch=True);pg=pg_(cx);pg.goto(URL);pg.wait_for_function("navigator.serviceWorker.ready.then(()=>1)");pg.wait_for_timeout(2000)
-  cached=pg.evaluate("caches.open('dinocol-v13').then(c=>Promise.all(%s.map(f=>c.match('sounds/'+f+'.mp3').then(r=>!!r))))"%FILES)
+  cached=pg.evaluate("caches.open('dinocol-v14').then(c=>Promise.all(%s.map(f=>c.match('sounds/'+f+'.mp3').then(r=>!!r))))"%FILES)
   check(all(cached),f'sounds in SW cache v13 {cached}')
   cx.set_offline(True);pg.reload();pg.wait_for_timeout(800);pg.click('#go');pg.wait_for_timeout(1500)
   src=pg.evaluate('({...VIS.SRC})');check(all(src.get(f)=='file' for f in FILES),f'files load offline {src}');cx.close()
