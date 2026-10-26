@@ -118,7 +118,7 @@ try:
     check(not pg.errs,f'{w}x{h} no console errors');pg.close()
   # ---- offline PWA ----
   cx=b.new_context(viewport={'width':915,'height':412});pg=cx.new_page();pg.goto(URL);pg.wait_for_function("navigator.serviceWorker.controller||navigator.serviceWorker.ready.then(()=>1)");pg.wait_for_timeout(1500);pg.reload();pg.wait_for_timeout(800)
-  keys=pg.evaluate("caches.keys()");check('dinocol-v12' in keys,f'SW cache v12 {keys}')
+  keys=pg.evaluate("caches.keys()");import re as _re;_v=_re.search(r'VER="(\d+)"',open(os.path.join(ROOT,'sw.js')).read()).group(1);check('dinocol-v'+_v in keys,f'SW cache v{_v} {keys}')
   cx.set_offline(True);pg.reload();pg.wait_for_timeout(800)
   check(pg.evaluate("typeof VIS==='object'&&typeof __dc==='object'"),'works offline (vis.js + game.js from cache)');cx.close()
   b.close()
