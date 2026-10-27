@@ -1,6 +1,7 @@
 # Dino Colossus v15 difficulty + Hard-only silly human tests (Playwright, headless Chromium). Run: python3 tests/test_v15.py
 import subprocess,time,sys,os,json
 from playwright.sync_api import sync_playwright
+import re as _re;_VER=_re.search(r'VER="(\d+)"',open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),'sw.js')).read()).group(1)
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)));PORT=8845
 srv=subprocess.Popen([sys.executable,'-m','http.server',str(PORT)],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);time.sleep(1)
 URL=f'http://localhost:{PORT}/';fails=[];passes=0;SHOTS='/workspace/dino-shots/v15';os.makedirs(SHOTS,exist_ok=True)
@@ -127,7 +128,7 @@ try:
     cx.close()
   # ---- offline: silly files cached ----
   cx=ctx(b);pg=pg_(cx);pg.goto(URL);pg.wait_for_function("navigator.serviceWorker.ready.then(()=>1)");pg.wait_for_timeout(3000)
-  cached=pg.evaluate("caches.open('dinocol-v15').then(c=>Promise.all(%s.map(f=>c.match('sounds/silly-'+f+'.ogg').then(r=>!!r))))"%json.dumps(SIL))
+  cached=pg.evaluate(("caches.open('dinocol-v"+_VER+"').then(c=>Promise.all(%s.map(f=>c.match('sounds/silly-'+f+'.ogg').then(r=>!!r))))")%json.dumps(SIL))
   check(all(cached),f'silly files in SW cache v15 {cached}')
   cx.set_offline(True);pg.reload();pg.wait_for_timeout(800);pg.evaluate("localStorage.dinoColossus_Diff='hard'");pg.click('#go');pg.wait_for_timeout(2500)
   src=pg.evaluate('({...VIS.SRC})');check(all(src.get(k)=='file' for k in SIL),'silly files load offline');cx.close()
@@ -136,7 +137,7 @@ try:
   for (w,h,dpr,tag) in [(915,412,1,''),(740,360,1,'_740'),(892,411,3.5,'_892')]:
     cx=ctx(b,w,h,dpr);pg=pg_(cx);pg.goto(URL);pg.wait_for_timeout(500)
     if tag!='_892': pg.screenshot(path=SHOTS+f'/menu{tag}.png')
-    ver=pg.inner_text('#ver');check('v15' in ver and 'Beethoven' in ver,f'{w}x{h}: menu shows v15 + Beethoven credit')
+    ver=pg.inner_text('#ver');check(('v'+_VER) in ver and 'Beethoven' in ver,f'{w}x{h}: menu shows v15 + Beethoven credit')
     for d in ['easy','medium','hard']:
       pg.evaluate(f"localStorage.dinoColossus_Diff='{d}'");pg.reload();pg.wait_for_timeout(300);pg.click('#go');pg.wait_for_timeout(200)
       # jump to section 5 (boss approach)

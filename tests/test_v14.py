@@ -1,6 +1,7 @@
 # Dino Colossus v14 Beethoven music tests (Playwright, headless Chromium). Run: python3 tests/test_v14.py
 import subprocess,time,sys,os
 from playwright.sync_api import sync_playwright
+import re as _re;_VER=_re.search(r'VER="(\d+)"',open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),'sw.js')).read()).group(1)
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)));PORT=8844
 srv=subprocess.Popen([sys.executable,'-m','http.server',str(PORT)],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);time.sleep(1)
 URL=f'http://localhost:{PORT}/';fails=[];passes=0;SHOTS='/workspace/dino-shots/v14'
@@ -47,7 +48,7 @@ try:
   pg.evaluate('VIS.setCalm(false)');check(not pg.evaluate('VIS.calm'),'Calm toggles off');cx.close()
   # offline
   cx=ctx(b);pg=pg_(cx);pg.goto(URL);pg.wait_for_function("navigator.serviceWorker.ready.then(()=>1)");pg.wait_for_timeout(4000)
-  cached=pg.evaluate("caches.open('dinocol-v15').then(c=>Promise.all(%s.map(f=>c.match('sounds/'+f+'.mp3').then(r=>!!r))))"%MUS)
+  cached=pg.evaluate(("caches.open('dinocol-v"+_VER+"').then(c=>Promise.all(%s.map(f=>c.match('sounds/'+f+'.mp3').then(r=>!!r))))")%MUS)
   check(all(cached),f'music in SW cache v15 {cached}')
   cx.set_offline(True);pg.reload();pg.wait_for_timeout(800);pg.click('#go');pg.wait_for_timeout(3000)
   src=pg.evaluate('({...VIS.SRC})');check(src.get('music')=='file' and src.get('bossmusic')=='file',f'music loads offline');cx.close()

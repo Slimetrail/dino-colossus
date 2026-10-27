@@ -1,6 +1,7 @@
 # Dino Colossus v13 sound tests (Playwright, headless Chromium). Run: python3 tests/test_v13.py
 import subprocess,time,sys,os
 from playwright.sync_api import sync_playwright
+import re as _re;_VER=_re.search(r'VER="(\d+)"',open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),'sw.js')).read()).group(1)
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)));PORT=8843
 srv=subprocess.Popen([sys.executable,'-m','http.server',str(PORT)],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);time.sleep(1)
 URL=f'http://localhost:{PORT}/';fails=[];passes=0
@@ -29,7 +30,7 @@ try:
   check(not pg.errs,f'no console errors {pg.errs}');cx.close()
   # 2 files load offline from SW cache
   cx=b.new_context(viewport={'width':915,'height':412},has_touch=True);pg=pg_(cx);pg.goto(URL);pg.wait_for_function("navigator.serviceWorker.ready.then(()=>1)");pg.wait_for_timeout(2000)
-  cached=pg.evaluate("caches.open('dinocol-v15').then(c=>Promise.all(%s.map(f=>c.match('sounds/'+f+'.mp3').then(r=>!!r))))"%FILES)
+  cached=pg.evaluate(("caches.open('dinocol-v"+_VER+"').then(c=>Promise.all(%s.map(f=>c.match('sounds/'+f+'.mp3').then(r=>!!r))))")%FILES)
   check(all(cached),f'sounds in SW cache v13 {cached}')
   cx.set_offline(True);pg.reload();pg.wait_for_timeout(800);pg.click('#go');pg.wait_for_timeout(1500)
   src=pg.evaluate('({...VIS.SRC})');check(all(src.get(f)=='file' for f in FILES),f'files load offline {src}');cx.close()

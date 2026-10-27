@@ -77,7 +77,7 @@ try:
   r=frames(pg,4000);pg.dispatch_event('#br','pointerup');perf['915x412 dpr1']={'frame':stats(r['dts']),'draw':stats(r['dr'])}
   check(stats(r['dr'])['p95']<12,f"draw p95 < 12ms headless: {stats(r['dr'])}")
   # end run -> stars awarded
-  st0=pg.evaluate('VIS.stars');pg.evaluate('__dc.G.score=3200;__dc.showEnd&&0');pg.evaluate("(()=>{const G=__dc.G;G.lives=1;__dc.loseLife()})()");pg.wait_for_timeout(1500)
+  st0=pg.evaluate('VIS.stars');pg.evaluate('__dc.G.score=3200;__dc.showEnd&&0');pg.evaluate("(()=>{const G=__dc.G;G.lives=1;__dc.loseLife()})()");pg.wait_for_timeout(1500);pg.click('#contNo');pg.wait_for_timeout(600)  # v16: Continue? screen first, No -> game over
   st1=pg.evaluate('VIS.stars');check(st1>st0 and st1-st0<=8,f'stars awarded at end ({st0}->{st1})')
   check(pg.evaluate("!document.getElementById('dstars').classList.contains('hide')"),'end screen shows stars line')
   check(not pg.errs,'no console errors in full run '+str(pg.errs[:3]));pg.close()
