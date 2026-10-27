@@ -1,0 +1,24 @@
+{
+ "_about": "Dino Colossus v14 (commit 4405a23) localStorage save format snapshot, taken 2026-10-26 before v15 work. v15 must keep every key name and value shape below unchanged.",
+ "keys": {
+  "dinoColossus_Diff": {"type":"string","values":["easy","medium","hard"],"default":"medium"},
+  "dinoColossus_Best": {"type":"number-string","note":"legacy best score (pre-per-difficulty)"},
+  "dinoColossus_Best_easy": {"type":"number-string"},
+  "dinoColossus_Best_medium": {"type":"number-string"},
+  "dinoColossus_Best_hard": {"type":"number-string"},
+  "dinoColossus_Top10_easy": {"type":"json-array","max":10,"item":{"i":"string 3 letters","s":"number score","sec":"number section","v":"number","dn":"number dino index","t":"number ms timestamp"}},
+  "dinoColossus_Top10_medium": {"same_as":"dinoColossus_Top10_easy"},
+  "dinoColossus_Top10_hard": {"same_as":"dinoColossus_Top10_easy"},
+  "dinoColossus_Run": {"type":"json-object","note":"Continue save; valid when 0<bossN<20","fields":{"diff":"string easy|medium|hard","pick":"number dino index","score":"number","lives":"number","hearts":"number","bossN":"number","thrown":"number","eaten":"number","t":"number ms timestamp"}},
+  "dinoColossus_Snd": {"type":"string","values":["0","1"]},
+  "dinoColossus_Dino": {"type":"number-string"},
+  "dinoColossus_Diamonds": {"type":"number-string"},
+  "dinoColossus_Unlocks": {"type":"json-object","fields":{"speed":"1","big":"1","flame":"1"}},
+  "dinoColossus_Stats": {"type":"json-object","fields":{"eaten":"number","erupts":"number"}},
+  "dinoColossus_Ini": {"type":"string 3 letters"},
+  "dinoColossus_Calm": {"type":"string","values":["0","1"]},
+  "dinoColossus_DressStars": {"type":"number-string"},
+  "dinoColossus_DressOwned": {"type":"json-array of item id strings"},
+  "dinoColossus_DressOn": {"type":"json-object tab->item id"}
+ }
+}

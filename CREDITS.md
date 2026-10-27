@@ -17,3 +17,9 @@ Musopen asks, as a courtesy, that people do not sell its recordings directly and
 
 ## Sound effects (v13)
 CC0 effects from Kenney (kenney.nl) and the SdiviHall Retro Monster Roar (OpenGameArt). No credit is required.
+
+## Silly sounds (CC0, OpenGameArt)
+- silly-toot.ogg – "Gastric Distress" by LFA – https://opengameart.org/content/gastric-distress (trimmed)
+- silly-boing.ogg, silly-pop.ogg – "Boings" by EZduzziteh – https://opengameart.org/content/boings
+- silly-whoosh.ogg – "Air Whoosh" by pyranostudios – https://opengameart.org/content/air-whoosh
+- silly-warn.ogg – "Silly Sound Effects" by EZduzziteh – https://opengameart.org/content/silly-sound-effects
