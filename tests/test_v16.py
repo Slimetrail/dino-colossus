@@ -16,14 +16,14 @@ def game(pg,d,clear=True):
     if clear: pg.evaluate("localStorage.clear()")
     pg.evaluate(f"localStorage.dinoColossus_Diff='{d}'");pg.reload();pg.wait_for_timeout(300);pg.click('#go');pg.wait_for_timeout(300)
 def kill(pg):  # lose every life the real way (hurt -> loseLife)
-    pg.evaluate("()=>{const G=__dc.G;G.inv=0;for(let k=0;k<60&&!G.dying;k++){G.hit=0;G.belly=0;__dc.hurt('test')}}");pg.wait_for_timeout(1200)
+    pg.evaluate("()=>{const G=__dc.G;G.inv=0;for(let k=0;k<60&&!G.dying;k++){G.hit=0;G.safeT=0;G.belly=0;__dc.hurt('test')}}");pg.wait_for_timeout(1200)
 def visible(pg,i): return pg.evaluate(f"!document.getElementById('{i}').classList.contains('hide')")
 def topN(pg,d): return pg.evaluate(f"JSON.parse(localStorage.dinoColossus_Top10_{d}||'[]').length")
 try:
  with sync_playwright() as p:
   b=p.chromium.launch(args=['--autoplay-policy=no-user-gesture-required'])
   cx=ctx(b);pg=pg_(cx);pg.goto(URL);pg.wait_for_timeout(400)
-  check('v16' in pg.inner_text('#ver'),'menu shows v16')
+  check(('v'+open(os.path.join(ROOT,'sw.js')).read().split('VER="')[1].split('"')[0]) in pg.inner_text('#ver'),'menu shows current version (v16+)')
   for d in ['easy','medium','hard']:
     game(pg,d);g=pg.evaluate("[__dc.G.hearts,__dc.G.lives]");check(g==[5,5],f'{d}: starts with 5 hearts, 5 lives {g}')
   game(pg,'medium');pg.evaluate("()=>{const G=__dc.G;G.hearts=1;G.hit=0;G.belly=0;G.inv=0;__dc.hurt('t')}");pg.wait_for_timeout(100)

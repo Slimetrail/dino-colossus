@@ -106,8 +106,8 @@ const carn=()=>true; // all dinos eat the same way now
 const CRIT=[{k:'liz',w:28,h:10,s:2},{k:'dodo',w:16,h:16,s:2},{k:'mammoth',w:30,h:20,s:2.5},{k:'bug',w:16,h:14,s:2}];
 const ov=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 function near(x){return G.solids.filter(s=>s.x<x+300&&s.x+s.w>x-300)}
-function moveBody(b){b.hitWall=0;b.bonk=null;const ss=near(b.x);b.x+=b.vx;for(const s of ss)if(ov(b,s)){if(b.vx>0)b.x=s.x-b.w;else if(b.vx<0)b.x=s.x+s.w;b.hitWall=1}
- b.vy=Math.min(b.vy+GRAV,12);b.y+=b.vy;b.on=null;for(const s of ss)if(ov(b,s)){if(b.vy>0){b.y=s.y-b.h;b.vy=0;b.on=s}else{b.y=s.y+s.h;b.vy=0;b.bonk=s}}}
+function moveBody(b){b.hitWall=0;b.bonk=null;const ss=near(b.x);b.x+=b.vx;for(const s of ss)if(ov(b,s)){if(s.k=='wall')b.x=(b.x+b.w/2<s.x+s.w/2)?s.x-b.w:s.x+s.w;else if(b.vx>0)b.x=s.x-b.w;else if(b.vx<0)b.x=s.x+s.w;b.hitWall=1}
+ b.vy=Math.min(b.vy+GRAV,12);b.y+=b.vy;b.on=null;for(const s of ss)if(s.k!='wall'&&ov(b,s)){if(b.vy>0){b.y=s.y-b.h;b.vy=0;b.on=s}else{b.y=s.y+s.h;b.vy=0;b.bonk=s}}}
 function groundTop(x){let t=null;for(const s of G.solids)if(s.k=='g'||s.k=='arena'){if(x>=s.x&&x<=s.x+s.w&&(t==null||s.y<t))t=s.y}return t}
 function solidBelow(x,y){return G.solids.some(s=>x>=s.x&&x<=s.x+s.w&&y>=s.y-2&&y<=s.y+8)}
 function addGround(x,w,top){G.solids.push({x,y:top,w,h:800,k:'g'})}
@@ -155,12 +155,17 @@ function usePower(){const k=G.pwSel;if(!G.running||!k||!unl[k]||G.charge<100||G.
  if(k=='speed'){G.pwOn=8;msg('SPEED BOOST!',d.x,d.y-50,'#00e5ff')}else if(k=='big'){G.bigSec=G.cur;G.pwOn=.01;msg('BIG BELLY x2!',d.x,d.y-50,'#00e5ff')}else{G.flame=120;G.pwOn=2;msg('FLAME BREATH!',d.x,d.y-50,'#ff9800');beep(150,1.5,'sawtooth',90)}beep(700,.1,'sine',1400);updPw();hud()}
 function confetti(x,y,n){for(let i=0;i<n;i++)G.parts.push({x,y,vx:R(-6,6),vy:R(-9,-2),l:1.3,r:R(3,6),c:pickA(['#f44336','#ffeb3b','#4caf50','#2196f3','#e91e63'])})}
 // ---- damage ----
-function hurt(why,o){o=o||{};if(G.hit||!G.running||G.inv)return;VIS.buzz(40);G.hit=70;
+function hurt(why,o){o=o||{};if(G.hit||G.safeT>0||!G.running||G.inv)return;VIS.buzz(40);G.hit=70;
  if(G.belly&&!o.keep){dropLoad(true);G.hit=70;msg('BLEH! You lost your snack!',G.d.x+G.d.w/2,G.d.y-40,'#b2ff59');for(let i=0;i<14;i++)G.goo.push({x:G.d.x+G.d.w/2+G.d.f*12,y:G.d.y+10,vx:G.d.f*R(1,4),vy:R(-6,-2),l:.8,r:R(3,6)});barfSnd();G.d.vy=-6;hud();return}
  G.hearts--;msg(why,G.d.x,G.d.y-40);for(let i=0;i<8;i++)G.smoke.push({x:G.d.x+17,y:G.d.y+10,vx:R(-1.5,1.5),vy:R(-2,-.5),r:8,l:.8});G.d.vy=-6;beep(200,.3,'triangle',80);hud();if(G.hearts<=0&&!G.dying)loseLife()}
+// ---- v17 respawn: safe spot back from pit edges, 0.5 s blink pause, 1.5 s safe moment, held left/right ignored until released
+function safeSpot(){const d=G.d,ok=x=>[-24,0,d.w/2,d.w,d.w+40].every(o=>groundTop(x+o)!=null);let x=Math.max(G.camX+10,G.lastSafe.x-10);
+ for(let k=0;k<60&&!ok(x);k++)x-=10;if(x<G.camX+10||!ok(x))x=Math.max(G.camX+10,G.lastSafe.x-10);const gt=groundTop(x+d.w/2);return {x,y:(gt!=null?gt:G.lastSafe.y+d.h)-d.h-2}}
+function respawn(how){const d=G.d;if(G.inBonus){d.x=Math.min(Math.max(d.x,G.camX+2),G.camX+VW-d.w-2);d.y=GY-d.h-2}else if(how!=='stay'){const p=safeSpot();d.x=p.x;d.y=p.y}
+ d.vx=0;d.vy=0;G.spawnT=30;G.safeT=90;G.needRel=1;G.hit=Math.max(G.hit,90)}
 function loseLife(){G.lives--;if(G.lives<=0){G.dying=1;G.hearts=0;G.banner={t:'OUT OF LIVES!',l:2};const tok=G;setTimeout(()=>{if(G===tok)askCont()},900);hud();return}
  G.hearts=5;G.hit=150;G.belly=0;G.banner={t:'LIFE LOST! '+G.lives+' LEFT',l:2};beep(330,.25,'triangle',165);setTimeout(()=>beep(220,.35,'triangle',110),250);
- if(!G.boss&&!G.inBonus){G.d.x=Math.max(G.camX+10,G.lastSafe.x-10);G.d.y=G.lastSafe.y-30;G.d.vy=0;G.d.vx=0}hud()}
+ respawn(G.boss?'stay':'');hud()}
 // ---- v16 Continue? after OUT OF LIVES: 20 s real-time countdown (paused while the app is hidden), Yes = 5 hearts + 5 lives
 // at the same section (or the start of the same boss, boss back to full health), score kept. No / time up = normal game over + Top 10 entry, once.
 let contT=null;
@@ -173,7 +178,7 @@ function contClose(){clearInterval(contT);G.cont=null;$('contq').classList.add('
 function contYes(){if(!G.cont)return;contClose();G.continues=(G.continues|0)+1;G.dying=0;G.lives=5;G.hearts=5;G.hit=150;G.inv=0;G.belly=0;G.banner={t:'CONTINUE! 5 LIVES',l:2};
  const d=G.d;d.vx=0;d.vy=0;const b=G.boss;
  if(b&&!b.gone){G.bossHint=null;b.hp=b.max;b.vuln=0;b.bonked=0;b.inv=0;b.say='';G.bshots=[];G.pshots=[];G.drops=[];G.bitems=[];G.held=null;d.x=G.camX+60;d.y=GY-80;try{ARCH[b.T.a].init(b)}catch(_){}b.hp=b.max;updAtk()}
- else if(!G.inBonus){d.x=Math.max(G.camX+10,G.lastSafe.x-10);d.y=G.lastSafe.y-30}
+ if(!b||b.gone)respawn('');else respawn('stay')
  G.running=true;hud();beep(523,.12);setTimeout(()=>beep(784,.2),120)}
 function contNo(){if(!G.cont)return;contClose();G.contDone=1;G.running=true;end()}
 $('contYes').onclick=contYes;$('contNo').onclick=contNo;
@@ -311,7 +316,7 @@ function enterBonus(){if(G.inBonus||G.boss)return;const keep=['solids','people',
 function exitBonus(){const s=G.saved;Object.assign(G,{solids:s.solids,people:s.people,littles:s.littles,critters:s.critters,rangers:s.rangers,bigs:s.bigs,boulders:s.boulders,vols:s.vols,pel:s.pel,gemsW:s.gemsW,deco:s.deco,portals:s.portals,camX:s.camX});G.d.x=s.dx;G.d.y=s.dy-40;G.d.vy=0;G.inBonus=0;G.chT=8;msg('Back to the run!',G.d.x,G.d.y-40,'#ffea00');hud()}
 // ---- update ----
 function update(){const d=G.d;{const zt=G.boss&&!G.boss.gone?1:0;if(Math.abs(zt-ZK)>.001){ZK+=(zt-ZK)*.035;if(Math.abs(zt-ZK)<.002)ZK=zt;view()}}G.el+=1/60;G.dayT+=1/60;
- let L=keys.arrowleft||keys.a||btn.l,Rt=keys.arrowright||keys.d||btn.r;if(G.rev){G.rev--;[L,Rt]=[Rt,L]}if(G.inv)G.inv--;if(G.shrink)G.shrink--;const J=keys[' ']||keys.arrowup||keys.w||btn.j;
+ let L=keys.arrowleft||keys.a||btn.l,Rt=keys.arrowright||keys.d||btn.r;if(G.safeT>0)G.safeT--;if(G.needRel){if(L||Rt){L=Rt=false}else G.needRel=0}if(G.spawnT>0){G.spawnT--;L=Rt=false;d.vx=0}if(G.rev){G.rev--;[L,Rt]=[Rt,L]}if(G.inv)G.inv--;if(G.shrink)G.shrink--;const J=keys[' ']||keys.arrowup||keys.w||btn.j;
  const st=G.inBonus?Math.min(1,stageOf(G.belly)):stageOf(G.belly),wasSt=G.stage||0;G.stage=st;G.fat=st==1;
  const sp=SPD*(G.pwKind=='speed'?1.6:1)*(G.dash?1.9:1)*(st==1?FAT_SPD:1);
  const wasRoll=G.roll;G.roll=st==2;if(st==1&&wasSt==0){msg('BIG BELLY! WADDLE…',d.x+17,d.y-30,'#ffcc80');beep(180,.25,'triangle',120)}
@@ -322,9 +327,10 @@ function update(){const d=G.d;{const zt=G.boss&&!G.boss.gone?1:0;if(Math.abs(zt-
  {const gs=G.grow*(G.shrink?.65:1),nh=(G.roll?40:36)*gs;d.y+=d.h-nh;d.w=(G.roll?40:34*(1+.3*Math.min(1.3,G.bv)))*gs;d.h=nh}const pvy=d.vy,pvx=d.vx;moveBody(d);if(G.roll&&d.hitWall){d.vx=-pvx*.25;if(Math.abs(pvx)>5){G.shake=4;beep(160,.06,'square',90)}}if(G.roll&&d.on&&pvy>3.5){d.vy=-pvy*.38;G.squish=8;beep(250,.06,'sine',350)}if(G.squish)G.squish--;if(d.x<G.camX)d.x=G.camX;
  if(d.bonk){const b=d.bonk;if(b.k=='q'){b.k='used';mystery(b)}else if(b.k=='cr'){G.solids.splice(G.solids.indexOf(b),1);for(let i=0;i<10;i++)G.parts.push({x:b.x+15,y:b.y+15,vx:R(-3,3),vy:R(-6,-1),l:.9,r:5,c:'#a1887f'});G.portals.push({x:b.x,y:b.y-T,w:T,h:T});msg('A secret door!',b.x,b.y-40,'#e1bee7');beep(400,.3,'sine',1200)}else if(b.k=='brick')breakBrick(b)}
  if(d.on&&(d.on.k=='g')&&!G.inBonus)G.lastSafe={x:d.x,y:d.y};
- if(G.silGrace>0&&d.y>GY+24&&!G.inBonus){d.x=Math.max(G.camX+10,G.lastSafe.x-10);d.y=G.lastSafe.y-30;d.vy=0;d.vx=0;msg('Safe!',d.x,d.y-20,'#b2ff59')}
- if(d.y>GY+24&&!G.inBonus&&!G.arena){for(let i=0;i<10;i++)G.parts.push({x:d.x+17,y:GY+20,vx:R(-3,3),vy:R(-7,-3),l:.8,r:4,c:pickA(['#ff6d00','#ffea00'])});G.hit=0;hurt('Lava! Hot hot!',{keep:1});d.x=Math.max(G.camX+10,G.lastSafe.x-10);d.y=G.lastSafe.y-30;d.vy=0;d.vx=0}
- if(d.y>GY+260){hurt('Fell in a pit!',{keep:1});d.x=Math.max(G.camX+10,G.lastSafe.x-10);d.y=G.lastSafe.y-30;d.vy=0;d.vx=0}
+ if(G.inBonus&&(d.y>GY-d.h+4||d.y<10)){if(d.y<10){d.y=10;if(d.vy<0)d.vy=0}else{d.y=GY-d.h;d.vy=0}}if(G.inBonus){d.x=Math.min(Math.max(d.x,G.camX),G.camX+VW-d.w)}
+ if((G.silGrace>0||G.safeT>0)&&d.y>GY+24&&!G.inBonus&&!G.arena){const p=safeSpot();d.x=p.x;d.y=p.y;d.vy=0;d.vx=0;G.needRel=1;msg('Safe!',d.x,d.y-20,'#b2ff59')}
+ if(d.y>GY+24&&!G.inBonus&&!G.arena){for(let i=0;i<10;i++)G.parts.push({x:d.x+17,y:GY+20,vx:R(-3,3),vy:R(-7,-3),l:.8,r:4,c:pickA(['#ff6d00','#ffea00'])});G.hit=0;const lv=G.lives;hurt('Lava! Hot hot!',{keep:1});if(G.running&&!G.dying&&G.lives===lv)respawn('')}
+ if(d.y>GY+260&&!G.inBonus){G.hit=0;const lv=G.lives;hurt('Fell in a pit!',{keep:1});if(G.running&&!G.dying&&G.lives===lv)respawn('')}
  // camera
  if(!G.boss&&!G.inBonus)G.camX=Math.max(G.camX,d.x-VW*.4);
  // sections
@@ -618,4 +624,4 @@ function sillyDraw(){const s=G.sil;G.silBot=0;if(!s||!(s.warn>0||s.fx))return;co
  const f=s.fx,ic2={stink:'💨',bubble:'🫧',pogo:'🦘'}[f.k];silBanner(ic2+' '+SIL.say[f.k]+' '+ic2,'#2e7d32','#fff',1,.75);if(f.k=='stink'){ctx.save();for(let i=0;i<5;i++){const a=G.el*2+i*1.25;ctx.globalAlpha=.45;ctx.fillStyle=i%2?'#9ccc65':'#7cb342';ctx.beginPath();ctx.arc(cx+Math.cos(a)*20,cy+Math.sin(a)*12,11,0,6.283);ctx.fill()}ctx.restore()}
  else if(f.k=='bubble'){ctx.save();const r=Math.max(d.w,d.h)*.8+Math.sin(G.el*6)*2;ctx.globalAlpha=.35;ctx.fillStyle='#b3e5fc';ctx.beginPath();ctx.arc(cx,cy,r,0,6.283);ctx.fill();ctx.globalAlpha=.9;ctx.strokeStyle='#e1f5fe';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx-r*.4,cy-r*.45,4,0,6.283);ctx.fill();ctx.restore()}
  else if(f.k=='pogo'){ctx.save();ctx.strokeStyle='#ff7043';ctx.lineWidth=3;ctx.beginPath();const by=d.y+d.h;for(let i=0;i<5;i++){ctx.lineTo(cx+(i%2?-6:6),by+i*3)}ctx.stroke();ctx.restore()}}
-window.__dc={DMUL,Dx,Dbase,DK,rampP,thrCfg,SIL,sillyStart,sillyUpd,BIG_SPD,BIG_CHANCE,poof,msg,useAtk,ITEMS,THROW,hurt,say,loadTop,insertTop,qualifies,topBest,showEnd,readLines,pickVoice,stageOf,STAGES:{FAT_AT,ROLL_AT,FAT_SPD,FAT_JMP,ROLL_JMP,ROLL_MAX,ROLL_ACC,ROLL_FRIC,ROLL_CAP},get G(){return G},get CHALLENGES(){return CHALLENGES},CRIT,get diff(){return diff},get ORDER(){return ORDER},loseLife,askCont,contYes,contNo,mystery,breakBrick,BOSSES,NBOSS,ARCH,bossHP,bossSpd,saveRun,loadRun,clearRun,champion,bossesBeat,GOOD,BAD,start,startChallenge,startBoss,enterBonus,exitBonus,UNL,usePower,erupt,cap,genSection,groundTop,get unl(){return unl},get pick(){return pick},consts:{T,GY,JV,GRAV,SPD,SEC_L},secLen,get view(){return {S,VW,VH,WY,OY,ZK,AW:AW()}}};
+window.__dc={DMUL,Dx,Dbase,DK,rampP,thrCfg,SIL,sillyStart,sillyUpd,BIG_SPD,BIG_CHANCE,poof,msg,useAtk,ITEMS,THROW,hurt,say,loadTop,insertTop,qualifies,topBest,showEnd,readLines,pickVoice,stageOf,STAGES:{FAT_AT,ROLL_AT,FAT_SPD,FAT_JMP,ROLL_JMP,ROLL_MAX,ROLL_ACC,ROLL_FRIC,ROLL_CAP},get G(){return G},get CHALLENGES(){return CHALLENGES},CRIT,get diff(){return diff},get ORDER(){return ORDER},loseLife,respawn,safeSpot,enterBonus,exitBonus,askCont,contYes,contNo,mystery,breakBrick,BOSSES,NBOSS,ARCH,bossHP,bossSpd,saveRun,loadRun,clearRun,champion,bossesBeat,GOOD,BAD,start,startChallenge,startBoss,enterBonus,exitBonus,UNL,usePower,erupt,cap,genSection,groundTop,get unl(){return unl},get pick(){return pick},consts:{T,GY,JV,GRAV,SPD,SEC_L},secLen,get view(){return {S,VW,VH,WY,OY,ZK,AW:AW()}}};
