@@ -1,5 +1,5 @@
 # Dino Colossus v17 tests: bonus cave corners/edges + safe respawn (Playwright, headless Chromium). Run: python3 tests/test_v17.py
-import subprocess,time,sys,os,json
+import subprocess,time,sys,os,json,re
 from playwright.sync_api import sync_playwright
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)));PORT=8848
 srv=subprocess.Popen([sys.executable,'-m','http.server',str(PORT)],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);time.sleep(1)
@@ -36,7 +36,7 @@ try:
   for w,h,dpr in [(915,412,1),(740,360,1),(892,411,3.5)]:
     cx=b.new_context(viewport={'width':w,'height':h},device_scale_factor=dpr,has_touch=True);pg=cx.new_page();errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:m.type=='error' and errs.append(m.text))
     pg.goto(URL);pg.wait_for_timeout(300);pg.click('#go');pg.wait_for_timeout(300)
-    if w==915: check('v17' in pg.inner_text('#ver'),'menu shows v17')
+    if w==915: _VER=re.search(r'VER="(\d+)"',open(os.path.join(ROOT,'sw.js')).read()).group(1);check('v'+_VER in pg.inner_text('#ver'),'menu shows v'+_VER)
     r=pg.evaluate(FUZZ,4242);check(r['oob']==0 and r['maxOut']<1 and r['minY']>=0 and r['maxY']<=361 and r['left']==0,f'{w}x{h}: bonus cave fuzz (30 runs, jumps, fat/roll, super jump) stays inside the room {r}')
     check(r['hurts']==0,f'{w}x{h}: no hearts lost from walls/corners in bonus cave')
     for side in 'lr':
