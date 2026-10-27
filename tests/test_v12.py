@@ -50,7 +50,7 @@ try:
   pg.dispatch_event('#br','pointerup');x1=pg.evaluate('__dc.G.d.x')
   check(x1>x0+100,f'dino ran right via touch button ({x0:.0f}->{x1:.0f})')
   pg.dispatch_event('#br','pointerdown',{'pointerType':'touch','width':200,'height':200});pg.wait_for_timeout(300);x2=pg.evaluate('__dc.G.d.x');pg.dispatch_event('#br','pointerup')
-  check(abs(x2-x1)<2,'huge palm touch ignored')
+  check(x2-x1<2,'huge palm touch ignored (no move right; pit respawn may move back)')
   check(pg.evaluate("VIS.st.sparks.length+VIS.st.rings.length+__dc.G.smoke.length")>=0,'effects arrays alive')
   # power-up burst
   pg.evaluate("const G=__dc.G;G.inv=99999;G.pel.push({x:G.d.x+G.d.w/2,y:G.d.y+G.d.h/2})");pg.wait_for_timeout(100)

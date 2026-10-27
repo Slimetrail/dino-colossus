@@ -542,7 +542,7 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ct
  VIS.fxWorld();VIS.roarText();for(const q of G.safe){const w=(G.el*6+q.v|0)%2;spr(SPR.person[q.v][(G.el*8|0)%2],Math.round(q.x),Math.round(q.y),2.2,q.vx<0);ctx.fillStyle='#000';ctx.fillRect(q.x+(q.vx<0?2:12),q.y-6-w*3,5,7);ctx.fillStyle='#f6c89f';ctx.fillRect(q.x+(q.vx<0?3:13),q.y-5-w*3,3,5);if(q.t<90)pxText('YAY!',q.x+9,q.y-18,10,'#fff59d','center')}
  for(const f of G.fly){if(f.chute)spr(SPR.chute,f.x-13,f.y-32,3);spr(SPR.person[f.v==null?0:f.v][0],f.x-9,f.y-13,2.2);if(!f.chute)pxText('WHEEE!',f.x+12,f.y-18,11,'#fff')}
  sillyDraw();
- for(const m of G.msgs){ctx.globalAlpha=Math.max(0,m.l);pxText(m.t.toUpperCase(),m.x,m.y,14,m.c,'center')}ctx.globalAlpha=1;
+ for(const m of G.msgs){ctx.globalAlpha=Math.max(0,m.l);const t=m.t.toUpperCase();ctx.font='bold 14px "Courier New",monospace';const hw=ctx.measureText(t).width/2+6,x=Math.max(G.camX+hw,Math.min(G.camX+VW-hw,m.x)),y=Math.max(WY+(OY>0?0:96/S)+4,G.silBot||0,m.y);pxText(t,x,y,14,m.c,'center')}ctx.globalAlpha=1;
  ctx.translate(Math.round(G.camX),WY);VIS.fgNear(B);VIS.leavesDraw(B);
  if(dk>0){ctx.fillStyle='rgba(10,10,60,'+dk*.6+')';ctx.fillRect(0,0,VW,VH)}
  if(G.flash){ctx.fillStyle='rgba(255,240,200,'+VIS.flashA(G.flash)+')';ctx.fillRect(0,0,VW,VH)}
@@ -555,26 +555,26 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ct
  for(let i=0;i<Math.min(G.hearts,6);i++)spr(SPR.heart,14+i*17,hy+36,2);if(G.hearts>6)pxText('+'+(G.hearts-6),14+6*17,hy+34,12,'#fff');pxText('LIVES',col*2,hy+36,12,'#fff');for(let i=0;i<G.lives;i++){ctx.save();ctx.beginPath();ctx.rect(col*2+46+i*20,hy+30,18,18);ctx.clip();spr(SPR.dino[pick][0],col*2+46+i*20-12,hy+31,1.5,false);ctx.restore()}
  if(carn()){const s=curSec(G.d.x);spr(SPR.little[0][0],col+4,hy+37,1.3);pxText(s.ate+'/'+s.goal,col+24,hy+36,12,s.ate>=s.goal?'#b2ff59':'#fff')}
  const tc=(t,y,sz,c)=>{ctx.font='bold '+sz+'px "Courier New",monospace';const w=ctx.measureText(t).width;if(w>VW-16)sz=Math.floor(sz*(VW-16)/w);pxText(t,VW/2,y,sz,c,'center')};
- let ty=58;if(b&&!b.gone){const bw=VW*.6,bx=VW*.2,seg=(bw-4)/b.max;tc('BOSS '+(b.n||1)+'/'+NBOSS+' · '+b.T.short,ty,14,'#fff');ty+=17;VIS.bossBar(b,ty);ty+=28;
+ let ty=92;if(b&&!b.gone){const bw=VW*.6,bx=VW*.2,seg=(bw-4)/b.max;tc('BOSS '+(b.n||1)+'/'+NBOSS+' · '+b.T.short,ty,14,'#fff');ty+=17;VIS.bossBar(b,ty);ty+=28;
   if(G.bossHint){const k=Math.min(1,G.bossHint.l);ctx.globalAlpha=k;if(G.bossHint.n)tc(G.bossHint.n,VH*.5-40,34,'#fff');tc(G.bossHint.t,VH*.5+Math.sin(G.el*6)*4,28,'#ffea00');tc('Touch a weapon, then tap ATTACK. Jumping on its head works too!',VH*.5+36,13,'#fff');ctx.globalAlpha=1}}
  if(G.ch&&G.ch.k=='rival'){tc('YOU '+G.ch.you+' VS '+G.ch.riv+' RIVAL',ty,15,'#fff');ty+=20}
  if(G.inBonus){tc('BONUS CAVE '+Math.ceil(G.bonusT),ty,15,'#ffea00');ty+=20}
  if(G.secBanner){ctx.globalAlpha=Math.min(1,G.secBanner.l);tc(G.secBanner.t.toUpperCase(),ty,16,'#fff');ctx.globalAlpha=1}
- if(G.banner)tc(G.banner.t.replace(/[^\x20-\x7E]/g,'').trim().toUpperCase(),VH*.36,26,'#ffea00');
+ if(G.banner)tc(G.banner.t.replace(/[^\x20-\x7E]/g,'').trim().toUpperCase(),G.silBot?VH*.52:VH*.36,26,'#ffea00');
  VIS.hudFront();ctx.restore()}
 let acc=0,last=0;function loop(t){const dt=Math.min(100,t-last||16);last=t;acc+=dt;while(acc>=16.67){if(G.running)update();else if(G.parts)G.parts=G.parts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.l-=.01;return p.l>0});VIS.step();acc-=16.67}draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
 // ---- v15 HARD-ONLY silly human: warning first (1.2 s), then ONE random harmless effect. Never on easy/medium.
 // stink: can't run sideways (jump still works); bubble: floats + drifts, pops, safe drop; pogo: auto-bounces.
 // Calm halves effect time. G.silGrace: while an effect runs (+1.5 s), falling into a pit/lava just puts you back, no hurt.
 const SIL={gap:[20,35],warn:1.2,dur:{stink:1.8,bubble:2.6,pogo:2},kinds:['stink','bubble','pogo'],
- say:{stink:'TOOT! STINKY CLOUD!',bubble:'BLOOP! A BUBBLE!',pogo:'BOING! POGO!'},snd:{stink:'toot',bubble:'whoosh',pogo:'boing'}};
+ say:{stink:'TOOT! NO RUNNING!',bubble:'BLOOP! BUBBLE RIDE!',pogo:'BOING! POGO!'},snd:{stink:'toot',bubble:'whoosh',pogo:'boing'}};
 function calmOn(){try{return LS.dinoColossus_Calm==='1'}catch(e){return false}}
 function sillyBusy(){const b=G.boss;return G.inBonus||G.dying||!G.running||G.paused||G.banner||G.secBanner&&G.secBanner.l>1.8||(b&&!b.gone&&(b.tele||b.roar||G.bossHint&&G.bossHint.l>4))}
-function sillyStart(k){const s=G.sil;k=k||pickA(SIL.kinds.filter(q=>q!==s.last));s.last=k;s.k=k;s.warn=SIL.warn;s.side=Math.random()<.5?-1:1;s.fx=null;msg('UH OH! A SILLY HUMAN!',G.d.x+17,G.d.y-50,'#ffeb3b');VIS.play('warn')}
+function sillyStart(k){const s=G.sil;k=k||pickA(SIL.kinds.filter(q=>q!==s.last));s.last=k;s.k=k;s.warn=SIL.warn;s.side=Math.random()<.5?-1:1;s.fx=null;VIS.play('warn')}
 function sillyUpd(d){if(G.diff!=='hard'){G.sil=null;return}if(!G.sil)G.sil={next:R(SIL.gap[0],SIL.gap[1]),n:0};const s=G.sil;if(G.silGrace>0)G.silGrace--;
  if(s.fx){s.fx.t-=1/60;if(s.fx.k=='stink'&&(G.el*60|0)%6==0)G.smoke.push({x:d.x+d.w/2+R(-14,14),y:d.y+R(0,d.h),vx:R(-.6,.6),vy:-.5,r:9,l:.6,g:1});
   if(s.fx.t<=0){const k=s.fx.k;s.fx=null;G.silGrace=90;if(k=='bubble'){VIS.play('pop');G.inv=Math.max(G.inv||0,90);poof(d.x+d.w/2,d.y+d.h/2,6);sillySafeX(d)}s.next=R(SIL.gap[0],SIL.gap[1])}return}
- if(s.warn>0){s.warn-=1/60;if(s.warn<=0){const k=s.k,c=calmOn()?.5:1;s.fx={k,t:SIL.dur[k]*c,T:SIL.dur[k]*c,ph:0};s.n++;G.silGrace=Math.round(SIL.dur[k]*c*60)+90;msg(SIL.say[k],d.x+17,d.y-40,'#b2ff59');VIS.play(SIL.snd[k]);if(k=='bubble'){d.vy=-2;sillySafeX(d)}if(!calmOn()){G.shake=Math.max(G.shake||0,4);VIS.buzz(25)}}return}
+ if(s.warn>0){s.warn-=1/60;if(s.warn<=0){const k=s.k,c=calmOn()?.5:1;s.fx={k,t:SIL.dur[k]*c,T:SIL.dur[k]*c,ph:0};s.n++;G.silGrace=Math.round(SIL.dur[k]*c*60)+90;VIS.play(SIL.snd[k]);if(k=='bubble'){d.vy=-2;sillySafeX(d)}if(!calmOn()){G.shake=Math.max(G.shake||0,4);VIS.buzz(25)}}return}
  if((s.next-=1/60)<=0){if(sillyBusy())s.next=1;else sillyStart()}}
 // bubble drift stays over solid ground so the pop never drops you into a pit or lava
 function sillySafeX(d){const cx=d.x+d.w/2;if(groundTop(cx)!=null&&groundTop(d.x+2)!=null&&groundTop(d.x+d.w-2)!=null)return;for(let o=10;o<400;o+=10)for(const sg of[-1,1]){const x=cx+sg*o;if(groundTop(x-d.w/2-2)!=null&&groundTop(x+d.w/2+2)!=null&&groundTop(x)!=null&&x-d.w/2>G.camX+4){d.x=x-d.w/2;return}}}
@@ -582,7 +582,11 @@ function sillyMove(d){const f=G.sil.fx;f.ph+=1/60;
  if(f.k=='stink'){if(!G.push)d.vx=0}
  else if(f.k=='bubble'){const top=Math.max(GY-210,40);d.vy=d.y>top?-GRAV-1.1:-GRAV;d.vx=Math.sin(f.ph*2.2)*1.6;const nx=d.x+d.vx;if(groundTop(nx+d.w/2)==null&&groundTop(d.x+d.w/2)!=null)d.vx=0}
  else if(f.k=='pogo'){if(d.on){d.vy=JV*.75;VIS.play('boing',.25)}}}
-function sillyDraw(){const s=G.sil;if(!s||!(s.warn>0||s.fx))return;const d=G.d,cx=d.x+d.w/2,cy=d.y+d.h/2;
+// one big screen-fixed banner below the HUD, always fully inside the view
+function silBanner(t,bg,fg,a,k){const bz=Math.round(Math.max(18,Math.min(30,VW/18))*k);ctx.save();ctx.font='bold '+bz+'px "Courier New",monospace';let tw=ctx.measureText(t).width;const pad=12,bw=Math.min(VW-16,tw+pad*2),bh=bz+pad*1.4;
+ const bx=G.camX+(VW-bw)/2,by=WY+(OY>0?0:96/S)+4+Math.sin(G.el*10)*2;ctx.globalAlpha=.85+.15*a;ctx.fillStyle=bg;ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect?ctx.roundRect(bx,by,bw,bh,10):ctx.rect(bx,by,bw,bh);ctx.fill();ctx.stroke();ctx.restore();G.silBot=by+bh+4;
+ pxText(t,bx+bw/2,by+pad*.7,tw>bw-pad*2?Math.floor(bz*(bw-pad*2)/tw):bz,fg,'center')}
+function sillyDraw(){const s=G.sil;G.silBot=0;if(!s||!(s.warn>0||s.fx))return;const d=G.d,cx=d.x+d.w/2,cy=d.y+d.h/2;
  // friendly cartoon human at the screen edge: round face, big smile, cap
  const mx=s.side<0?G.camX+24:G.camX+VW-44,gt=groundTop(mx+10),my=(gt==null?GY:gt)-46,bob=Math.sin(G.el*8)*2;
  ctx.save();ctx.fillStyle='#42a5f5';ctx.fillRect(mx+4,my+20+bob,14,18);ctx.fillStyle='#5d4037';ctx.fillRect(mx+5,my+38,5,8);ctx.fillRect(mx+12,my+38,5,8);
@@ -590,8 +594,12 @@ function sillyDraw(){const s=G.sil;if(!s||!(s.warn>0||s.fx))return;const d=G.d,c
  ctx.fillStyle='#000';ctx.fillRect(mx+7,my+10+bob,2,2);ctx.fillRect(mx+13,my+10+bob,2,2);ctx.strokeStyle='#000';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(mx+11,my+14+bob,4,.2,2.9);ctx.stroke();
  ctx.fillStyle='#ffcc80';const ax=s.side<0?mx+18:mx-4;ctx.fillRect(ax,my+22+bob+(s.warn>0?Math.sin(G.el*14)*3:0),8,4);ctx.restore();
  if(s.warn>0){const k=s.k,ic={stink:'💨',bubble:'🫧',pogo:'🦘'}[k];const a=.5+.5*Math.sin(G.el*12);ctx.save();ctx.globalAlpha=.4+.4*a;ctx.strokeStyle='#ffeb3b';ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy,30+a*6,0,6.283);ctx.stroke();ctx.restore();
-  pxText('! '+ic+' !',cx,d.y-36,18,'#ffeb3b','center');pxText('SILLY HUMAN!',mx+11,my-18,11,'#fff59d','center');return}
- const f=s.fx;if(f.k=='stink'){ctx.save();for(let i=0;i<5;i++){const a=G.el*2+i*1.25;ctx.globalAlpha=.45;ctx.fillStyle=i%2?'#9ccc65':'#7cb342';ctx.beginPath();ctx.arc(cx+Math.cos(a)*20,cy+Math.sin(a)*12,11,0,6.283);ctx.fill()}ctx.restore();pxText('NO RUN!',cx,d.y-26,11,'#c5e1a5','center')}
+  
+  // one big banner, screen-fixed below the HUD, clamped inside the view
+  silBanner(ic+' SILLY HUMAN! '+ic,'#e53935','#ffeb3b',a,1);
+  // bouncing arrow over the human so it is clear where the trick comes from
+  const ay=my-26+Math.sin(G.el*12)*4;ctx.save();ctx.fillStyle='#ffeb3b';ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(mx+11,ay+16);ctx.lineTo(mx+1,ay);ctx.lineTo(mx+21,ay);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();return}
+ const f=s.fx,ic2={stink:'💨',bubble:'🫧',pogo:'🦘'}[f.k];silBanner(ic2+' '+SIL.say[f.k]+' '+ic2,'#2e7d32','#fff',1,.75);if(f.k=='stink'){ctx.save();for(let i=0;i<5;i++){const a=G.el*2+i*1.25;ctx.globalAlpha=.45;ctx.fillStyle=i%2?'#9ccc65':'#7cb342';ctx.beginPath();ctx.arc(cx+Math.cos(a)*20,cy+Math.sin(a)*12,11,0,6.283);ctx.fill()}ctx.restore()}
  else if(f.k=='bubble'){ctx.save();const r=Math.max(d.w,d.h)*.8+Math.sin(G.el*6)*2;ctx.globalAlpha=.35;ctx.fillStyle='#b3e5fc';ctx.beginPath();ctx.arc(cx,cy,r,0,6.283);ctx.fill();ctx.globalAlpha=.9;ctx.strokeStyle='#e1f5fe';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx-r*.4,cy-r*.45,4,0,6.283);ctx.fill();ctx.restore()}
  else if(f.k=='pogo'){ctx.save();ctx.strokeStyle='#ff7043';ctx.lineWidth=3;ctx.beginPath();const by=d.y+d.h;for(let i=0;i<5;i++){ctx.lineTo(cx+(i%2?-6:6),by+i*3)}ctx.stroke();ctx.restore()}}
 window.__dc={DMUL,Dx,Dbase,DK,rampP,thrCfg,SIL,sillyStart,sillyUpd,BIG_SPD,BIG_CHANCE,poof,msg,useAtk,ITEMS,THROW,hurt,say,loadTop,insertTop,qualifies,topBest,showEnd,readLines,pickVoice,stageOf,STAGES:{FAT_AT,ROLL_AT,FAT_SPD,FAT_JMP,ROLL_JMP,ROLL_MAX,ROLL_ACC,ROLL_FRIC,ROLL_CAP},get G(){return G},get CHALLENGES(){return CHALLENGES},CRIT,get diff(){return diff},get ORDER(){return ORDER},loseLife,mystery,breakBrick,BOSSES,NBOSS,ARCH,bossHP,bossSpd,saveRun,loadRun,clearRun,champion,bossesBeat,GOOD,BAD,start,startChallenge,startBoss,enterBonus,exitBonus,UNL,usePower,erupt,cap,genSection,groundTop,get unl(){return unl},get pick(){return pick},consts:{T,GY,JV,GRAV,SPD,SEC_L},secLen,get view(){return {S,VW,VH,WY,OY,ZK,AW:AW()}}};

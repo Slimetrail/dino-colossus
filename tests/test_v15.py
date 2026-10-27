@@ -147,7 +147,8 @@ try:
         pg.dispatch_event('#br','pointerdown',{'pointerType':'touch'});pg.evaluate("__dc.sillyStart('bubble')");r=frames(pg,3000);pg.dispatch_event('#br','pointerup')
         perf[f'{w}x{h} dpr{dpr} hard+effect']=st(r)
         if tag=='_740':
-          pg.wait_for_timeout(200);pg.screenshot(path=SHOTS+'/hard-warning_740.png');pg.wait_for_timeout(1300);pg.screenshot(path=SHOTS+'/hard-bubble_740.png')
+          pg.evaluate("__dc.sillyStart('bubble')");pg.wait_for_timeout(300);pg.screenshot(path=SHOTS+'/hard-warning_740.png');pg.wait_for_timeout(1300);pg.screenshot(path=SHOTS+'/hard-bubble_740.png');pg.wait_for_timeout(3000)
+          for k in ['stink','pogo']: pg.evaluate(f"__dc.sillyStart('{k}')");pg.wait_for_timeout(1500);pg.screenshot(path=SHOTS+f'/hard-{k}_740.png');pg.wait_for_timeout(2500)
       pg.evaluate("__dc.G.running=false")
     check(pg.evaluate("document.getElementById('c').width")<=w*1.01+1 or dpr>1,f'{w}x{h} canvas ok')
     check(not pg.errs,f'{w}x{h} dpr{dpr}: no console errors {pg.errs}');cx.close()
