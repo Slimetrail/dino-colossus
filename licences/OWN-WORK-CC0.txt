@@ -1,0 +1,5 @@
+Own work, made 2026-10-29 and dedicated to the public domain under CC0 1.0 (see VSCO-2-CE-upright-CC0-1.0.txt for the full CC0 1.0 legal text, which applies equally). No credit needed. A Slimetrail production.
+
+Shark Attack pieces: Shark Intro - Deep Pressure; Open Water swim loop (these two also use own synthesised sounds: drone, noise swell, heartbeat, sub boom, pad, water shimmer, reverb); Hungry Shark chase; Sunny Shallows; Deep Trouble (quiet and loud masters); Boss Beaten fanfare; Morning to Dusk.
+Dino app pieces (piano only, VSCO-2 CE Upright Piano samples, CC0): Elise Goes Stomping (intro; quotes only the public-domain opening idea of Fur Elise, Beethoven d. 1827); Big Friendly Stroll (main play loop); Colossus Stomps (boss loop).
+For every piece: the note lists and the scripts in /workspace/shark-music/ are own work too.

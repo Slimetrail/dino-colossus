@@ -1,5 +1,5 @@
-const VER="18",CACHE="dinocol-v"+VER;
-const SHELL=["./","index.html","sprites.js?v=18","vis.js?v=18","game.js?v=18","manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png","sounds/stomp.mp3","sounds/land.mp3","sounds/roar.mp3","sounds/chime.mp3","sounds/cheer.mp3","sounds/sparkle.mp3","sounds/music-pastoral.mp3","sounds/music-minuet.mp3","sounds/silly-toot.ogg","sounds/silly-boing.ogg","sounds/silly-whoosh.ogg","sounds/silly-pop.ogg","sounds/silly-warn.ogg"];
+const VER="19",CACHE="dinocol-v"+VER;
+const SHELL=["./","index.html","sprites.js?v=19","vis.js?v=19","game.js?v=19","manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png","sounds/stomp.mp3","sounds/land.mp3","sounds/roar.mp3","sounds/chime.mp3","sounds/cheer.mp3","sounds/sparkle.mp3","sounds/dino-main-loop.ogg","sounds/dino-boss-loop.ogg","sounds/intro-elise-dino-variation.ogg","sounds/boss-beaten-fanfare.ogg","sounds/silly-toot.ogg","sounds/silly-boing.ogg","sounds/silly-whoosh.ogg","sounds/silly-pop.ogg","sounds/silly-warn.ogg"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL.map(u=>new Request(u,{cache:"reload"})))).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith("dinocol-")&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener("fetch",e=>{const r=e.request;if(r.method!=="GET"||new URL(r.url).origin!==location.origin)return;

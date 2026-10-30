@@ -29,7 +29,7 @@ try:
     tag=f'{w}x{h}'+(f'+L{sal}' if sal else '')
     cx=b.new_context(viewport={'width':w,'height':h},device_scale_factor=dpr,has_touch=True,is_mobile=True);pg=cx.new_page();errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:m.type=='error' and errs.append(m.text))
     pg.goto(URL);pg.evaluate(SETUP);pg.reload();pg.wait_for_timeout(300)
-    if w==1024 and not sal: check('v18' in pg.inner_text('#ver'),'menu shows v18')
+    if w==1024 and not sal: _V=open(os.path.join(ROOT,'sw.js')).read().split('VER="')[1].split('"')[0];check('v'+_V in pg.inner_text('#ver'),'menu shows current version (v18+)')
     if sal: pg.evaluate(f"()=>document.documentElement.style.setProperty('--sal','{sal}px')")
     pg.click('#go');pg.wait_for_timeout(400)
     bad=[]

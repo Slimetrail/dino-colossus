@@ -26,11 +26,14 @@ const SOUNDS={
  whoosh:{url:'sounds/silly-whoosh.ogg',vol:.35,synth(a,t,o){noise(a,t,.9,.5,1400,o)},len:1},
  pop:{url:'sounds/silly-pop.ogg',vol:.4,synth(a,t,o){const s=a.createOscillator(),g=a.createGain();s.type='sine';s.frequency.setValueAtTime(900,t);s.frequency.exponentialRampToValueAtTime(200,t+.08);g.gain.setValueAtTime(.7,t);g.gain.exponentialRampToValueAtTime(.001,t+.1);s.connect(g).connect(o);s.start(t);s.stop(t+.12)},len:.15},
  warn:{url:'sounds/silly-warn.ogg',vol:.35,synth(a,t,o){[660,880].forEach((fq,i)=>{const s=a.createOscillator(),g=a.createGain(),tt=t+i*.12;s.type='triangle';s.frequency.value=fq;g.gain.setValueAtTime(.5,tt);g.gain.exponentialRampToValueAtTime(.001,tt+.1);s.connect(g).connect(o);s.start(tt);s.stop(tt+.11)})},len:.3},
- // v14 music: Beethoven recordings (Musopen, public domain, from Wikimedia Commons). The loop crossfade (1.5 s) is
- // baked into each file. Real recordings play at steady pace (speeding them raises the pitch); the generated
+ // v19 music: original work (CC0) using CC0 VSCO-2 CE piano samples; licence texts in licences/. Each loop plays the
+ // whole file. Real recordings play at steady pace (speeding them raises the pitch); the generated
  // music is the backup until the file loads or if it fails, and that backup still speeds up with the game.
- music:{url:'sounds/music-pastoral.mp3',loop:true},
- bossmusic:{url:'sounds/music-minuet.mp3',loop:true}
+ music:{url:'sounds/dino-main-loop.ogg',loop:true},
+ bossmusic:{url:'sounds/dino-boss-loop.ogg',loop:true},
+ // v19 one-shots on the music bus: title intro (plays once per title screen, own fade) and boss-beaten fanfare
+ intro:{url:'sounds/intro-elise-dino-variation.ogg',once:true},
+ fanfare:{url:'sounds/boss-beaten-fanfare.ogg',once:true}
 };
 function noise(a,t,d,v,fc,o){const n=Math.floor(a.sampleRate*d),b=a.createBuffer(1,n,a.sampleRate),c=b.getChannelData(0);for(let i=0;i<n;i++)c[i]=(Math.random()*2-1)*(1-i/n);const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();s.buffer=b;f.type='lowpass';f.frequency.value=fc;g.gain.value=v;s.connect(f).connect(g).connect(o);s.start(t)}
 const BUF={},SRC={};let rendering=false,master=null,musicG=null,sfxG=null;
@@ -39,12 +42,13 @@ const numLS=(k,d)=>{const v=parseFloat(LS[k]);return isFinite(v)?Math.max(0,Math
 function setVol(m,s){if(m!=null){volM=Math.max(0,Math.min(1,m));try{LS.dinoColossus_VolMusic=volM}catch(e){}}if(s!=null){volS=Math.max(0,Math.min(1,s));try{LS.dinoColossus_VolSfx=volS}catch(e){}}if(musicG)musicG.gain.value=.5*volM;if(sfxG)sfxG.gain.value=.5*volS}
 function A(){try{if(!tapped)return null;return (typeof ac==='function')?ac():null}catch(e){return null}}
 function prerender(){if(rendering)return;rendering=true;const a=A();if(!a)return;const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
- for(const [k,s] of Object.entries(SOUNDS)){if(s.loop)continue;
+ for(const [k,s] of Object.entries(SOUNDS)){if(s.loop||s.once)continue;
   const synth=()=>{if(!OAC||!s.synth)return;try{const o=new OAC(1,Math.ceil(a.sampleRate*s.len),a.sampleRate);s.synth(o,0,o.destination);o.startRendering().then(b=>{if(!SRC[k]||SRC[k]==='synth'){BUF[k]=b;SRC[k]='synth'}}).catch(()=>{})}catch(e){}};
   synth(); // generated sound first, replaced by the file once it loads; stays if the file fails
   if(s.url)fetch(s.url).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((ok,no)=>{const p=a.decodeAudioData(b,ok,no);if(p&&p.catch)p.catch(no)})).then(b=>{BUF[k]=b;SRC[k]='file'}).catch(()=>{});}
- for(const k of ['music','bossmusic']){SRC[k]='synth';const u=SOUNDS[k].url;if(u)fetch(u).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((ok,no)=>{const p=a.decodeAudioData(b,ok,no);if(p&&p.catch)p.catch(no)})).then(b=>{if(b.duration<5)throw 0;BUF[k]=b;LOOP[k]=edges(b);SRC[k]='file'}).catch(()=>{SRC[k]='synth'})}}
-// skip mp3 encoder padding (near-silent samples) at the edges so the loop seam has no gap
+ for(const k of ['music','bossmusic']){SRC[k]='synth';const u=SOUNDS[k].url;if(u)fetch(u).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((ok,no)=>{const p=a.decodeAudioData(b,ok,no);if(p&&p.catch)p.catch(no)})).then(b=>{if(b.duration<5)throw 0;BUF[k]=b;LOOP[k]=edges(b);SRC[k]='file'}).catch(()=>{SRC[k]='synth'})}
+ for(const k of ['intro','fanfare'])fetch(SOUNDS[k].url).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((ok,no)=>{const p=a.decodeAudioData(b,ok,no);if(p&&p.catch)p.catch(no)})).then(b=>{BUF[k]=b;SRC[k]='file'}).catch(()=>{SRC[k]='none'})}
+// skip encoder padding (near-silent samples, mp3 or ogg) (near-silent samples) at the edges so the loop seam has no gap
 const LOOP={};function edges(b){const c=b.getChannelData(0),n=c.length,th=.0005;let i=0,j=n-1;while(i<n&&Math.abs(c[i])<th&&i<b.sampleRate*.2)i++;while(j>i&&Math.abs(c[j])<th&&n-j<b.sampleRate*.2)j--;return [i/b.sampleRate,(j+1)/b.sampleRate]}
 function out(){const a=A();if(!a)return null;if(!master){master=a.createGain();master.gain.value=1;master.connect(a.destination);musicG=a.createGain();musicG.gain.value=.5*volM;musicG.connect(master);sfxG=a.createGain();sfxG.gain.value=.5*volS;sfxG.connect(master)}return master}
 let lastPlay={};
@@ -54,8 +58,19 @@ function play(k,minGap){if(typeof snd!=='undefined'&&!snd)return;if(!tapped)retu
 const PROG=[[0,4,7],[5,9,12],[7,11,14],[0,4,7]],BASE=196;let mNext=0,mStep=0,mTimer=0,mSrc=null;
 function bpm(){if(typeof G==='undefined'||!G.running)return 100;let b=96+Math.min(44,((G.cur||1)-1)*4+(G.bossN||0)*2);if(G.boss&&!G.boss.gone)b+=10;if(G.dash||G.pwKind==='speed')b+=8;return Math.min(160,b)}
 function note(a,t,f,d,type,v){const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(musicG);o.start(t);o.stop(t+d+.02)}
-function musicTick(){const a=A();if(!a)return;const want=st.running&&(typeof snd==='undefined'||snd)&&!document.hidden&&tapped;
+// v19 one-shots: intro once per title showing (stops when the game starts), fanfare once per boss beaten
+let oSrc=null,introDone=false,fanPend=false;
+function stopOne(f){if(oSrc){const s=oSrc;oSrc=null;try{const a=A();if(f&&a){const t=a.currentTime;s.g.gain.cancelScheduledValues(t);s.g.gain.setValueAtTime(s.g.gain.value,t);s.g.gain.linearRampToValueAtTime(0,t+f);s.stop(t+f+.02)}else s.stop()}catch(e){}}}
+function playOne(k){const a=A();if(!a||!BUF[k])return;stopOne();out();const g=a.createGain(),s=a.createBufferSource();s.buffer=BUF[k];s.loop=false;s.k=k;s.g=g;g.gain.value=1;s.connect(g).connect(musicG);s.onended=()=>{if(oSrc===s)oSrc=null};s.start(a.currentTime+.01);oSrc=s}
+function titleUp(){const e=document.getElementById('start');return !!e&&!e.classList.contains('hide')}
+function musicTick(){const a=A();if(!a)return;const on_=(typeof snd==='undefined'||snd)&&!document.hidden&&tapped;
+ if(!on_){stopOne();stopMusic();return}
+ if(!st.running){fanPend=false;if(oSrc&&oSrc.k==='fanfare')stopOne(.3);
+  if(titleUp()){if(!introDone&&BUF.intro&&!oSrc){introDone=true;playOne('intro')}}else if(oSrc&&oSrc.k==='intro')stopOne(.3)}
+ else{introDone=false;if(oSrc&&oSrc.k==='intro')stopOne(.3);if(fanPend&&BUF.fanfare){fanPend=false;stopMusic(.15);playOne('fanfare')}}
+ const want=st.running;
  if(!want){stopMusic();return}out();
+ if(oSrc&&oSrc.k==='fanfare'){if(mSrc)stopMusic(.15);return}
  const mk=(typeof G!=='undefined'&&G.boss&&!G.boss.gone)?'bossmusic':'music';
  if(BUF[mk]){if(!mSrc||mSrc.k!==mk){stopMusic(.6);const g=a.createGain(),s=a.createBufferSource(),[ls,le]=LOOP[mk];s.buffer=BUF[mk];s.loop=true;s.loopStart=ls;s.loopEnd=le;s.k=mk;s.g=g;
    g.gain.setValueAtTime(0,a.currentTime);g.gain.linearRampToValueAtTime(1,a.currentTime+.6);s.connect(g).connect(musicG);s.start(a.currentTime,ls);mSrc=s}return}
@@ -281,7 +296,7 @@ function step(){if(typeof G==='undefined'||!G.d)return;const d=G.d;trailStep(d);
  if(G.cur>st.lastCur&&!G.inBonus){cheer('LEVEL '+G.cur+'!');}if(!G.inBonus)st.lastCur=G.cur;
  // boss arrival roar + beaten cheer
  const b=G.boss;if(b&&b!==st.bossRef){st.bossRef=b;st.bossGone=false;st.ghost=b.hp;const cx=b.x+b.w/2,cy=b.y+b.h/2;for(let i=0;i<3;i++)st.rings.push({x:cx,y:cy,r:10+i*-26,R:260,l:1,c:'#ffffff',w:4,sp:5});G.shake=Math.max(G.shake||0,14);play('bigroar');buzz(60);st.roarTxt=80}
- if(b&&b.gone&&!st.bossGone){st.bossGone=true;cheer('BOSS BEATEN!','#ffd54f');starBurst(b.x+b.w/2,b.y+b.h/2,'#ffd54f')}
+ if(b&&b.gone&&!st.bossGone){st.bossGone=true;fanPend=true;cheer('BOSS BEATEN!','#ffd54f');starBurst(b.x+b.w/2,b.y+b.h/2,'#ffd54f')}
  if(st.roarTxt>0)st.roarTxt--;
  // leaves
  const want=calm||G.inBonus?0:10;if(st.leaves.length<want&&Math.random()<.04)st.leaves.push({x:rnd(0,VW),y:-8,vx:rnd(-.6,-.1),vy:rnd(.35,.7),a:rnd(0,TAU),va:rnd(-.05,.05),ph:rnd(0,TAU),k:Math.random()<.5});
@@ -329,4 +344,4 @@ function initUI(){const $=id=>document.getElementById(id);if(!$('dress'))return;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initUI);else setTimeout(initUI,0);
 
 return {step,bgFar,fgNear,leavesDraw,fxWorld,pickupGlow,bossAura,bossBar,hudBack,hudFront,roarText,shakeOff,flashA,dinoSpr,dinoDecor,pal,sqs,wobble,starBurst,dust,play,buzz,award,cheer,setCalm,
- get calm(){return calm},get stars(){return stars},set stars(v){stars=v;saveDress()},get on(){return on},owned:()=>[...owned],SOUNDS,COLORS,HATS,GLASSES,BACKS,TRAILS,PETS,TABS,sfxOut:()=>{const o=out();return o?sfxG:null},vol:()=>({music:volM,sfx:volS,musicBus:musicG?musicG.gain.value:null,sfxBus:sfxG?sfxG.gain.value:null}),setVol,starsFor,st,BUF,SRC,get tapped(){return tapped},LOOP,get mKey(){return mSrc?mSrc.k:null},bpm,openDress}})();
+ get calm(){return calm},get stars(){return stars},set stars(v){stars=v;saveDress()},get on(){return on},owned:()=>[...owned],SOUNDS,COLORS,HATS,GLASSES,BACKS,TRAILS,PETS,TABS,sfxOut:()=>{const o=out();return o?sfxG:null},vol:()=>({music:volM,sfx:volS,musicBus:musicG?musicG.gain.value:null,sfxBus:sfxG?sfxG.gain.value:null}),setVol,starsFor,st,BUF,SRC,get tapped(){return tapped},LOOP,get mKey(){return mSrc?mSrc.k:null},get oKey(){return oSrc?oSrc.k:null},get oLoop(){return oSrc?oSrc.loop:null},bpm,openDress}})();
