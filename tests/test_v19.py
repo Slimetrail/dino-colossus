@@ -3,7 +3,7 @@ import subprocess,time,sys,os,re
 from playwright.sync_api import sync_playwright
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)));PORT=8864
 srv=subprocess.Popen([sys.executable,'-m','http.server',str(PORT)],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);time.sleep(1)
-URL=os.environ.get('DINO_URL',f'http://localhost:{PORT}/');fails=[];passes=0;SHOTS=os.environ.get('DINO_SHOTS','/workspace/dino-music-shots');os.makedirs(SHOTS,exist_ok=True)
+URL=os.environ.get('DINO_URL',f'http://localhost:{PORT}/?intro=0');fails=[];passes=0;SHOTS=os.environ.get('DINO_SHOTS','/workspace/dino-music-shots');os.makedirs(SHOTS,exist_ok=True)
 def check(c,m):
     global passes
     print(('PASS ' if c else 'FAIL ')+m)
@@ -12,7 +12,7 @@ def check(c,m):
 NEW=['dino-main-loop.ogg','dino-boss-loop.ogg','intro-elise-dino-variation.ogg','boss-beaten-fanfare.ogg'];OLD=['music-pastoral.mp3','music-minuet.mp3']
 CREDIT='Designed and created by SlimeTrail Productions'
 sw=open(os.path.join(ROOT,'sw.js')).read();VER=re.search(r'VER="(\d+)"',sw).group(1)
-check(VER=='20','sw VER is 20')
+check(int(VER)>=20,f'sw VER is 20+ ({VER})')
 for f in NEW: check(os.path.isfile(os.path.join(ROOT,'sounds',f)) and f'"sounds/{f}"' in sw,f'{f} exists and is in SW SHELL')
 import hashlib
 MD5={'dino-main-loop.ogg':('a495346391b141e736364289765a12eb',152.308),'dino-boss-loop.ogg':('0a4464f5f9dcc6493ad98f2550a4b6ce',118.261),'intro-elise-dino-variation.ogg':('f8c11f2906247d3ac76c41862fe93401',40.0),'boss-beaten-fanfare.ogg':('e2272e08349efba4e2c7506f93c19c7e',5.3)}
@@ -22,7 +22,7 @@ code={n:open(os.path.join(ROOT,n)).read() for n in ['vis.js','game.js','sprites.
 for f in OLD: check(not os.path.exists(os.path.join(ROOT,'sounds',f)) and not any(f in c for c in code.values()),f'{f} gone and not referenced')
 check(not any(w in c for c in code.values() for w in ['Beethoven','Musopen']),'no Beethoven/Musopen text in code')
 check(CREDIT in code['index.html'] and CREDIT in open(os.path.join(ROOT,'CREDITS.md')).read(),'credit line in index.html and CREDITS.md')
-check('?v=19' not in code['index.html'] and '?v=20' in code['index.html'],'index.html ?v= bumped to 20')
+check('?v=19' not in code['index.html'] and f'?v={VER}' in code['index.html'],f'index.html ?v= bumped to {VER}')
 def pg_(cx):
     pg=cx.new_page();pg.errs=[];pg.bad=[];pg.req=[]
     pg.on('pageerror',lambda e:pg.errs.append(str(e)));pg.on('console',lambda m:m.type=='error' and pg.errs.append(m.text))

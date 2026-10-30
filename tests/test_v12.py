@@ -3,7 +3,7 @@ import subprocess,time,sys,os,json,statistics
 from playwright.sync_api import sync_playwright
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)));PORT=8842
 srv=subprocess.Popen([sys.executable,'-m','http.server',str(PORT)],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);time.sleep(1)
-URL=f'http://localhost:{PORT}/';fails=[];passes=0;perf={}
+URL=f'http://localhost:{PORT}/?intro=0';fails=[];passes=0;perf={}
 def check(c,m):
     global passes
     print(('PASS ' if c else 'FAIL ')+m)

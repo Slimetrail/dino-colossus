@@ -4,7 +4,7 @@ from playwright.sync_api import sync_playwright
 import re as _re;_VER=_re.search(r'VER="(\d+)"',open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),'sw.js')).read()).group(1)
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)));PORT=8845
 srv=subprocess.Popen([sys.executable,'-m','http.server',str(PORT)],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);time.sleep(1)
-URL=f'http://localhost:{PORT}/';fails=[];passes=0;SHOTS='/workspace/dino-shots/v15';os.makedirs(SHOTS,exist_ok=True)
+URL=f'http://localhost:{PORT}/?intro=0';fails=[];passes=0;SHOTS='/workspace/dino-shots/v15';os.makedirs(SHOTS,exist_ok=True)
 SIL=['toot','boing','whoosh','pop','warn']
 def check(c,m):
     global passes
