@@ -37,7 +37,7 @@ try:
       check(at_title(pg) and pg.evaluate('INTRO.lastEnd')=='skip',f'launch {n}: tap skips to the title (game not started)')
   # launch 3: let it play to the end
   t0=time.time();pg.wait_for_function('!INTRO.playing',timeout=25000);dur=time.time()-t0+.4;pg.wait_for_timeout(200)
-  check(at_title(pg) and pg.evaluate('INTRO.lastEnd')=='end' and 12<=dur<=17,f'launch 3: plays through (~{dur:.1f} s) and ends at title')
+  check(at_title(pg) and pg.evaluate('INTRO.lastEnd')=='end' and 8.5<=dur<=11.5,f'launch 3: plays through (~{dur:.1f} s) and ends at title')
   check(CREDIT in pg.inner_text('#ver') and pg.is_visible('#ver') and 'v21' in pg.inner_text('#ver'),'title line still present after intro')
   pg.reload();pg.wait_for_timeout(300);check(playing(pg),'intro plays after reload')
   pg.keyboard.press('Space');pg.wait_for_timeout(600);check(at_title(pg),'key press skips')
@@ -52,20 +52,35 @@ try:
   # calm: shorter, no shake
   cx=b.new_context(viewport={'width':844,'height':390},has_touch=True);pg=pg_(cx);pg.goto(URL+'?intro=0');pg.evaluate("localStorage.dinoColossus_Calm='1'");pg.goto(URL);pg.wait_for_timeout(200)
   t0=time.time();check(pg.evaluate('INTRO.calm'),'calm mode detected');pg.wait_for_function('!INTRO.playing',timeout=20000);d=time.time()-t0
-  check(d<11,f'calm intro is shorter ({d:.1f} s)');check('if(!calm){' in intro,'no screen shake in calm');check(not pg.errs,'calm: no errors');cx.close()
+  check(d<8,f'calm intro is shorter ({d:.1f} s)');check('if(!calm){' in intro,'no screen shake in calm');check(not pg.errs,'calm: no errors');cx.close()
   # reduced motion also counts as calm
   cx=b.new_context(viewport={'width':844,'height':390},reduced_motion='reduce');pg=pg_(cx);pg.goto(URL);pg.wait_for_timeout(200);check(pg.evaluate('INTRO.calm'),'prefers-reduced-motion -> calm intro');cx.close()
   # mute respected: VIS.play is the only sound path, and it checks snd
   check("VIS.play(k)" in intro and not re.search(r'new Audio|AudioContext|createOscillator',intro),'intro sound only through VIS.play (respects mute + effects slider)')
   # performance: 4x CPU throttle (mid phone), 844x390 @2x
   cx=b.new_context(viewport={'width':844,'height':390},device_scale_factor=2,has_touch=True,is_mobile=True);pg=pg_(cx)
-  cdp=cx.new_cdp_session(pg);cdp.send('Emulation.setCPUThrottlingRate',{'rate':4});pg.goto(URL);pg.wait_for_function('INTRO.T>7.5',timeout=30000);mid=pg.evaluate('INTRO.counts')
-  pg.wait_for_function('!INTRO.playing',timeout=30000);st=pg.evaluate('INTRO.stats()');perf=st
+  cdp=cx.new_cdp_session(pg);cdp.send('Emulation.setCPUThrottlingRate',{'rate':4});tw=time.time();pg.goto(URL);pg.wait_for_function('INTRO.T>7.5',timeout=30000);mid=pg.evaluate('INTRO.counts')
+  pg.wait_for_function('!INTRO.playing',timeout=30000);st=pg.evaluate('INTRO.stats()');perf=st;tw=time.time()-tw
+  check(8.5<=tw<=12,f'4x throttle: timeline is wall-clock (performance.now) so length stays ~9.5 s ({tw:.1f} s incl. load)')
   print('PERF 4x throttle',json.dumps(st),'particles',mid)
   check(st and st['avg']<28 and st['p95']<=34 and st['drawAvg']<4,f"frame time 4x throttle avg {st['avg']:.1f} ms p95 {st['p95']:.1f} ms, script per frame {st['drawAvg']:.2f} ms")
   check(mid['smoke']<=36 and mid['lava']<=26 and mid['ash']<=50,f'particle caps {mid}');cx.close()
   cx=b.new_context(viewport={'width':844,'height':390},device_scale_factor=3,has_touch=True,is_mobile=True);pg=pg_(cx);pg.goto(URL);pg.wait_for_function('!INTRO.playing',timeout=30000);st=pg.evaluate('INTRO.stats()');print('PERF no throttle',json.dumps(st))
   check(st['avg']<17.5 and st['p95']<18,f"unthrottled 60 fps avg {st['avg']:.1f} ms p95 {st['p95']:.1f} ms");cx.close()
+  # timeline constants + skip stopwatch (skip -> intro hidden and PLAY clickable), normal and 4x CPU
+  cx=b.new_context(viewport={'width':844,'height':390},device_scale_factor=2,has_touch=True,is_mobile=True);pg=pg_(cx);pg.goto(URL);pg.wait_for_function('typeof INTRO!=="undefined"&&INTRO.playing')
+  tm=pg.evaluate('INTRO.TIMES');check(abs(tm['TOTAL']-9.5)<.3 and tm['TE']==3.4 and abs(tm['TI']-4.7)<.05 and tm['FZ']==.1,f'timeline: chase 0-3.4, landing 4.7, 0.1 s freeze, total {tm["TOTAL"]} s')
+  check('performance.now()-t0' in intro or '(now-t0)/1000' in intro,'timeline derived from performance.now, not frame counts');check("fillText('Tap to skip" in intro,'Tap to skip hint drawn every frame from the first frame');cx.close()
+  JS="""()=>new Promise(r=>{const go=document.getElementById('go');const t=INTRO.skipAt;(function f(){const rc=go.getBoundingClientRect(),el=document.elementFromPoint(rc.x+rc.width/2,rc.y+rc.height/2);if(!INTRO.playing&&el&&(el===go||go.contains(el)))r(performance.now()-t);else requestAnimationFrame(f)})()})"""
+  SW={}
+  for rate in (1,4):
+    for at in (.5,3.0):
+      cx=b.new_context(viewport={'width':844,'height':390},device_scale_factor=3,has_touch=True,is_mobile=True);pg=pg_(cx)
+      if rate>1: cx.new_cdp_session(pg).send('Emulation.setCPUThrottlingRate',{'rate':rate})
+      pg.goto(URL);pg.wait_for_function(f'typeof INTRO!=="undefined"&&INTRO.T>={at}',timeout=20000,polling=10);pg.touchscreen.tap(420,200);ms=pg.evaluate(JS);SW[f'{rate}x@{at}s']=round(ms)
+      pg.click('#go');pg.wait_for_timeout(500);ok=pg.evaluate('G.running')
+      check(ms<1000 and ok,f'skip at {at} s, {rate}x CPU: playable after {ms:.0f} ms (<1000) and game starts');cx.close()
+  print('SKIP STOPWATCH',json.dumps(SW))
   # offline (installed PWA): intro.js cached by SW, intro still plays offline
   cx=b.new_context(viewport={'width':915,'height':412});pg=pg_(cx);pg.goto(URL);pg.wait_for_function("navigator.serviceWorker.ready.then(()=>1)");pg.wait_for_timeout(2500)
   ok=pg.evaluate("caches.open('dinocol-v21').then(c=>c.match('intro.js?v=21')).then(r=>!!r)");check(ok,'intro.js in SW cache v21')
