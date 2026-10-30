@@ -45,6 +45,9 @@ const DK={
  throwT:x=>Math.max(40,Math.round(64/Math.pow(x,.25))), // frames a throw is in the air (reaction window): 64 / 54 / 40 floor (0.67 s)
  extra:x=>Math.min(2,Math.floor(Math.log2(x)+1e-9)) // extra simultaneous boss throws / challenge level: 0 / 1 / 2
 };
+// v22 (Jeremy: "on hard reduce the spear guys, there are too many"): Hard spawns 40% of the old spear-people count per section. Easy/Medium unchanged.
+const RANGER_MUL={hard:.35};
+function rangerN(n,RT){return Math.min(12,Math.round(Math.min(5,1+(n>>1))*RT*(RANGER_MUL[G&&G.diff]||1)))}
 function thrCfg(){const x=Dbase();return {every:DK.throwEvery(x),T:DK.throwT(x)}}
 if(LS.dinoColossus_Best&&!LS.dinoColossus_Best_hard)LS.dinoColossus_Best_hard=LS.dinoColossus_Best;
 const bestKey=()=>'dinoColossus_Best_'+diff;
@@ -131,7 +134,7 @@ function genSection(n,x0){let b;do{b=pickA(BIOMES)}while(G.lastBiome&&b.n==G.las
  for(let i=0;i<CROWD;i++){const p=onG(18,26);G.people.push({...p,w:18,h:26,vx:0,vy:0,e:pickA(PEOPLE),v:RI(0,5)})}
  for(let i=0;i<RI(4,6);i++){const c=pickA(CRIT),p=onG(c.w,c.h);G.critters.push({...p,w:c.w,h:c.h,k:c.k,sc:c.s,vx:pickA([-.5,.5]),vy:0})}
  for(let i=0;i<Math.min(24,Math.round((5+Math.min(6,n))*RT));i++){const p=onG(26,22);G.littles.push({...p,w:26,h:22,vx:-.8*SP,vy:0,c:RI(0,3)})}
- for(let i=0;i<Math.min(12,Math.round(Math.min(5,1+(n>>1))*RT));i++){const p=onG(24,34);if(p.x>x0+T*12)G.rangers.push({...p,w:24,h:34,vx:.8*SP,vy:0,stun:0,sp:SP})}
+ for(let i=0;i<rangerN(n,RT);i++){const p=onG(24,34);if(p.x>x0+T*12)G.rangers.push({...p,w:24,h:34,vx:.8*SP,vy:0,stun:0,sp:SP})}
  const gsB=gs.filter(g=>g.top>=GY-1&&g.w>=T*4);for(let i=0;i<(n>1&&Math.random()<BIG_CHANCE?1:0);i++){const gg=pickA(gsB.length?gsB:gs),p={x:R(gg.x+4,gg.x+Math.max(8,gg.w-60)),y:gg.top-60};if(p.x>x0+T*16)G.bigs.push({...p,w:56,h:60,vx:-.6,vy:0,f:-1,chomp:0,ate:0,bcd:0})}
  for(let i=0;i<6;i++){const g=pickA(gs);G.pel.push({x:R(g.x+10,g.x+g.w-10),y:g.top-70})}
  if(Math.random()<.35){const g=pickA(gs);G.gemsW.push({x:g.x+g.w/2,y:g.top-60})}
@@ -594,11 +597,16 @@ const SIL={gap:[20,35],warn:1.2,dur:{stink:1.8,bubble:2.6,pogo:2},kinds:['stink'
  say:{stink:'TOOT! NO RUNNING!',bubble:'BLOOP! BUBBLE RIDE!',pogo:'BOING! POGO!'},snd:{stink:'toot',bubble:'whoosh',pogo:'boing'}};
 function calmOn(){try{return LS.dinoColossus_Calm==='1'}catch(e){return false}}
 function sillyBusy(){const b=G.boss;return G.inBonus||G.dying||!G.running||G.paused||G.banner||G.secBanner&&G.secBanner.l>1.8||(b&&!b.gone&&(b.tele||b.roar||G.bossHint&&G.bossHint.l>4))}
-function sillyStart(k){const s=G.sil;k=k||pickA(SIL.kinds.filter(q=>q!==s.last));s.last=k;s.k=k;s.warn=SIL.warn;s.side=Math.random()<.5?-1:1;s.fx=null;VIS.play('warn')}
+function sillyStart(k){const s=G.sil;k=k||pickA(SIL.kinds.filter(q=>q!==s.last));s.last=k;s.k=k;s.warn=SIL.warn;s.side=Math.random()<.5?-1:1;s.fx=null;s.eaten=0;VIS.play('warn')}
+// v22 (Jeremy: "the silly human should be eaten not popping up"): the silly human runs from the screen edge straight into the dino's mouth during the
+// warning and is gulped when the warning ends, wherever the dino is, so its trick always happens. It is drawn only (no hitbox): it can never hurt the dino.
+function sillyHum(){const s=G.sil,d=G.d;if(!s||!(s.warn>0))return null;const p=Math.min(1,Math.max(0,1-s.warn/SIL.warn)),e=p*p*(3-2*p);
+ const ex=s.side<0?G.camX+24:G.camX+VW-44,gt=groundTop(ex+10),ey=(gt==null?GY:gt)-46,tx=d.x+d.w/2-11+(d.f||1)*d.w*.35,ty=d.y+d.h*.2-12;
+ return {x:ex+(tx-ex)*e,y:ey+(ty-ey)*e,p,sc:1-.45*e}}
 function sillyUpd(d){if(G.diff!=='hard'){G.sil=null;return}if(!G.sil)G.sil={next:R(SIL.gap[0],SIL.gap[1]),n:0};const s=G.sil;if(G.silGrace>0)G.silGrace--;
  if(s.fx){s.fx.t-=1/60;if(s.fx.k=='stink'&&(G.el*60|0)%6==0)G.smoke.push({x:d.x+d.w/2+R(-14,14),y:d.y+R(0,d.h),vx:R(-.6,.6),vy:-.5,r:9,l:.6,g:1});
   if(s.fx.t<=0){const k=s.fx.k;s.fx=null;G.silGrace=90;if(k=='bubble'){VIS.play('pop');G.inv=Math.max(G.inv||0,90);poof(d.x+d.w/2,d.y+d.h/2,6);sillySafeX(d)}s.next=R(SIL.gap[0],SIL.gap[1])}return}
- if(s.warn>0){s.warn-=1/60;if(s.warn<=0){const k=s.k,c=calmOn()?.5:1;s.fx={k,t:SIL.dur[k]*c,T:SIL.dur[k]*c,ph:0};s.n++;G.silGrace=Math.round(SIL.dur[k]*c*60)+90;VIS.play(SIL.snd[k]);if(k=='bubble'){d.vy=-2;sillySafeX(d)}if(!calmOn()){G.shake=Math.max(G.shake||0,4);VIS.buzz(25)}}return}
+ if(s.warn>0){s.warn-=1/60;if(s.warn<=0){const k=s.k,c=calmOn()?.5:1;s.eaten=1;G.silEaten=(G.silEaten||0)+1;poof(d.x+d.w/2,d.y+d.h*.3,5);msg('GULP! Silly human!',d.x,d.y-40,'#ffeb3b');VIS.play('pop');s.fx={k,t:SIL.dur[k]*c,T:SIL.dur[k]*c,ph:0};s.n++;G.silGrace=Math.round(SIL.dur[k]*c*60)+90;VIS.play(SIL.snd[k]);if(k=='bubble'){d.vy=-2;sillySafeX(d)}if(!calmOn()){G.shake=Math.max(G.shake||0,4);VIS.buzz(25)}}return}
  if((s.next-=1/60)<=0){if(sillyBusy())s.next=1;else sillyStart()}}
 // bubble drift stays over solid ground so the pop never drops you into a pit or lava
 function sillySafeX(d){const cx=d.x+d.w/2;if(groundTop(cx)!=null&&groundTop(d.x+2)!=null&&groundTop(d.x+d.w-2)!=null)return;for(let o=10;o<400;o+=10)for(const sg of[-1,1]){const x=cx+sg*o;if(groundTop(x-d.w/2-2)!=null&&groundTop(x+d.w/2+2)!=null&&groundTop(x)!=null&&x-d.w/2>G.camX+4){d.x=x-d.w/2;return}}}
@@ -612,18 +620,19 @@ function silBanner(t,bg,fg,a,k){const bz=Math.round(Math.max(18,Math.min(30,VW/1
  pxText(t,bx+bw/2,by+pad*.7,tw>bw-pad*2?Math.floor(bz*(bw-pad*2)/tw):bz,fg,'center')}
 function sillyDraw(){const s=G.sil;G.silBot=0;if(!s||!(s.warn>0||s.fx))return;const d=G.d,cx=d.x+d.w/2,cy=d.y+d.h/2;
  // friendly cartoon human at the screen edge: round face, big smile, cap
- const mx=s.side<0?G.camX+24:G.camX+VW-44,gt=groundTop(mx+10),my=(gt==null?GY:gt)-46,bob=Math.sin(G.el*8)*2;
- ctx.save();ctx.fillStyle='#42a5f5';ctx.fillRect(mx+4,my+20+bob,14,18);ctx.fillStyle='#5d4037';ctx.fillRect(mx+5,my+38,5,8);ctx.fillRect(mx+12,my+38,5,8);
+ if(!(s.warn>0))return sillyFx(s,d,cx,cy);const hm=sillyHum(),mx=hm.x,my=hm.y,bob=Math.sin(G.el*14)*2;
+ ctx.save();ctx.translate(mx+11,my+23);ctx.scale(hm.sc,hm.sc);ctx.translate(-mx-11,-my-23);ctx.fillStyle='#42a5f5';ctx.fillRect(mx+4,my+20+bob,14,18);ctx.fillStyle='#5d4037';ctx.fillRect(mx+5,my+38,5,8);ctx.fillRect(mx+12,my+38,5,8);
  ctx.fillStyle='#ffcc80';ctx.beginPath();ctx.arc(mx+11,my+12+bob,9,0,6.283);ctx.fill();ctx.fillStyle='#e53935';ctx.fillRect(mx+2,my+2+bob,18,5);
  ctx.fillStyle='#000';ctx.fillRect(mx+7,my+10+bob,2,2);ctx.fillRect(mx+13,my+10+bob,2,2);ctx.strokeStyle='#000';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(mx+11,my+14+bob,4,.2,2.9);ctx.stroke();
- ctx.fillStyle='#ffcc80';const ax=s.side<0?mx+18:mx-4;ctx.fillRect(ax,my+22+bob+(s.warn>0?Math.sin(G.el*14)*3:0),8,4);ctx.restore();
+ ctx.fillStyle='#ffcc80';const ax=s.side<0?mx+18:mx-4;ctx.fillRect(ax,my+22+bob+Math.sin(G.el*14)*3,8,4);ctx.restore();
  if(s.warn>0){const k=s.k,ic={stink:'💨',bubble:'🫧',pogo:'🦘'}[k];const a=.5+.5*Math.sin(G.el*12);ctx.save();ctx.globalAlpha=.4+.4*a;ctx.strokeStyle='#ffeb3b';ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy,30+a*6,0,6.283);ctx.stroke();ctx.restore();
   
   // one big banner, screen-fixed below the HUD, clamped inside the view
   silBanner(ic+' SILLY HUMAN! '+ic,'#e53935','#ffeb3b',a,1);
   // bouncing arrow over the human so it is clear where the trick comes from
-  const ay=my-26+Math.sin(G.el*12)*4;ctx.save();ctx.fillStyle='#ffeb3b';ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(mx+11,ay+16);ctx.lineTo(mx+1,ay);ctx.lineTo(mx+21,ay);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();return}
- const f=s.fx,ic2={stink:'💨',bubble:'🫧',pogo:'🦘'}[f.k];silBanner(ic2+' '+SIL.say[f.k]+' '+ic2,'#2e7d32','#fff',1,.75);if(f.k=='stink'){ctx.save();for(let i=0;i<5;i++){const a=G.el*2+i*1.25;ctx.globalAlpha=.45;ctx.fillStyle=i%2?'#9ccc65':'#7cb342';ctx.beginPath();ctx.arc(cx+Math.cos(a)*20,cy+Math.sin(a)*12,11,0,6.283);ctx.fill()}ctx.restore()}
+  const ay=my-26+Math.sin(G.el*12)*4;ctx.save();ctx.fillStyle='#ffeb3b';ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(mx+11,ay+16);ctx.lineTo(mx+1,ay);ctx.lineTo(mx+21,ay);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();return}}
+function sillyFx(s,d,cx,cy){
+ const f=s.fx;if(!f)return;const ic2={stink:'💨',bubble:'🫧',pogo:'🦘'}[f.k];silBanner(ic2+' '+SIL.say[f.k]+' '+ic2,'#2e7d32','#fff',1,.75);if(f.k=='stink'){ctx.save();for(let i=0;i<5;i++){const a=G.el*2+i*1.25;ctx.globalAlpha=.45;ctx.fillStyle=i%2?'#9ccc65':'#7cb342';ctx.beginPath();ctx.arc(cx+Math.cos(a)*20,cy+Math.sin(a)*12,11,0,6.283);ctx.fill()}ctx.restore()}
  else if(f.k=='bubble'){ctx.save();const r=Math.max(d.w,d.h)*.8+Math.sin(G.el*6)*2;ctx.globalAlpha=.35;ctx.fillStyle='#b3e5fc';ctx.beginPath();ctx.arc(cx,cy,r,0,6.283);ctx.fill();ctx.globalAlpha=.9;ctx.strokeStyle='#e1f5fe';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx-r*.4,cy-r*.45,4,0,6.283);ctx.fill();ctx.restore()}
  else if(f.k=='pogo'){ctx.save();ctx.strokeStyle='#ff7043';ctx.lineWidth=3;ctx.beginPath();const by=d.y+d.h;for(let i=0;i<5;i++){ctx.lineTo(cx+(i%2?-6:6),by+i*3)}ctx.stroke();ctx.restore()}}
-window.__dc={DMUL,Dx,Dbase,DK,rampP,thrCfg,SIL,sillyStart,sillyUpd,BIG_SPD,BIG_CHANCE,poof,msg,useAtk,ITEMS,THROW,hurt,say,loadTop,insertTop,qualifies,topBest,showEnd,readLines,pickVoice,stageOf,STAGES:{FAT_AT,ROLL_AT,FAT_SPD,FAT_JMP,ROLL_JMP,ROLL_MAX,ROLL_ACC,ROLL_FRIC,ROLL_CAP},get G(){return G},get CHALLENGES(){return CHALLENGES},CRIT,get diff(){return diff},get ORDER(){return ORDER},loseLife,respawn,safeSpot,enterBonus,exitBonus,askCont,contYes,contNo,mystery,breakBrick,BOSSES,NBOSS,ARCH,bossHP,bossSpd,saveRun,loadRun,clearRun,champion,bossesBeat,GOOD,BAD,start,startChallenge,startBoss,enterBonus,exitBonus,UNL,usePower,erupt,cap,edgeIn,genSection,groundTop,get unl(){return unl},get pick(){return pick},consts:{T,GY,JV,GRAV,SPD,SEC_L},secLen,get view(){return {S,VW,VH,WY,OY,ZK,AW:AW()}}};
+window.__dc={rangerN,RANGER_MUL,sillyHum,DMUL,Dx,Dbase,DK,rampP,thrCfg,SIL,sillyStart,sillyUpd,BIG_SPD,BIG_CHANCE,poof,msg,useAtk,ITEMS,THROW,hurt,say,loadTop,insertTop,qualifies,topBest,showEnd,readLines,pickVoice,stageOf,STAGES:{FAT_AT,ROLL_AT,FAT_SPD,FAT_JMP,ROLL_JMP,ROLL_MAX,ROLL_ACC,ROLL_FRIC,ROLL_CAP},get G(){return G},get CHALLENGES(){return CHALLENGES},CRIT,get diff(){return diff},get ORDER(){return ORDER},loseLife,respawn,safeSpot,enterBonus,exitBonus,askCont,contYes,contNo,mystery,breakBrick,BOSSES,NBOSS,ARCH,bossHP,bossSpd,saveRun,loadRun,clearRun,champion,bossesBeat,GOOD,BAD,start,startChallenge,startBoss,enterBonus,exitBonus,UNL,usePower,erupt,cap,edgeIn,genSection,groundTop,get unl(){return unl},get pick(){return pick},consts:{T,GY,JV,GRAV,SPD,SEC_L},secLen,get view(){return {S,VW,VH,WY,OY,ZK,AW:AW()}}};

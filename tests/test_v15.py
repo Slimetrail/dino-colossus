@@ -137,7 +137,7 @@ try:
   for (w,h,dpr,tag) in [(915,412,1,''),(740,360,1,'_740'),(892,411,3.5,'_892')]:
     cx=ctx(b,w,h,dpr);pg=pg_(cx);pg.goto(URL);pg.wait_for_timeout(500)
     if tag!='_892': pg.screenshot(path=SHOTS+f'/menu{tag}.png')
-    ver=pg.inner_text('#ver');check(('v'+_VER) in ver and 'SlimeTrail Productions' in ver,f'{w}x{h}: menu shows current version + credit line')
+    ver=pg.inner_text('#ver');check(('v'+_VER) in ver and 'A Slimetrail production' in ver,f'{w}x{h}: menu shows current version + credit line')
     for d in ['easy','medium','hard']:
       pg.evaluate(f"localStorage.dinoColossus_Diff='{d}'");pg.reload();pg.wait_for_timeout(300);pg.click('#go');pg.wait_for_timeout(200)
       # jump to section 5 (boss approach)

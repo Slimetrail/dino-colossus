@@ -36,7 +36,10 @@ const SOUNDS={
  fanfare:{url:'sounds/boss-beaten-fanfare.ogg',once:true}
 };
 function noise(a,t,d,v,fc,o){const n=Math.floor(a.sampleRate*d),b=a.createBuffer(1,n,a.sampleRate),c=b.getChannelData(0);for(let i=0;i<n;i++)c[i]=(Math.random()*2-1)*(1-i/n);const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();s.buffer=b;f.type='lowpass';f.frequency.value=fc;g.gain.value=v;s.connect(f).connect(g).connect(o);s.start(t)}
-const BUF={},SRC={};let rendering=false,master=null,musicG=null,sfxG=null;
+const BUF={},SRC={};
+// v22: start downloading the intro music bytes at load (allowed before a tap) so it can start right with the tap-to-start intro
+let PRE_INTRO=null;try{PRE_INTRO=fetch(SOUNDS.intro.url).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).catch(()=>null)}catch(e){PRE_INTRO=Promise.resolve(null)}
+let rendering=false,master=null,musicG=null,sfxG=null;
 // v15 volume: two buses on the one AudioContext. Music bus = 0.5*music slider, effects bus = 0.5*effects slider. Defaults 100% / 40%.
 const numLS=(k,d)=>{const v=parseFloat(LS[k]);return isFinite(v)?Math.max(0,Math.min(1,v)):d};let volM=numLS('dinoColossus_VolMusic',1),volS=numLS('dinoColossus_VolSfx',.4);
 function setVol(m,s){if(m!=null){volM=Math.max(0,Math.min(1,m));try{LS.dinoColossus_VolMusic=volM}catch(e){}}if(s!=null){volS=Math.max(0,Math.min(1,s));try{LS.dinoColossus_VolSfx=volS}catch(e){}}if(musicG)musicG.gain.value=.5*volM;if(sfxG)sfxG.gain.value=.5*volS}
@@ -47,7 +50,7 @@ function prerender(){if(rendering)return;rendering=true;const a=A();if(!a)return
   synth(); // generated sound first, replaced by the file once it loads; stays if the file fails
   if(s.url)fetch(s.url).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((ok,no)=>{const p=a.decodeAudioData(b,ok,no);if(p&&p.catch)p.catch(no)})).then(b=>{BUF[k]=b;SRC[k]='file'}).catch(()=>{});}
  for(const k of ['music','bossmusic']){SRC[k]='synth';const u=SOUNDS[k].url;if(u)fetch(u).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((ok,no)=>{const p=a.decodeAudioData(b,ok,no);if(p&&p.catch)p.catch(no)})).then(b=>{if(b.duration<5)throw 0;BUF[k]=b;LOOP[k]=edges(b);SRC[k]='file'}).catch(()=>{SRC[k]='synth'})}
- for(const k of ['intro','fanfare'])fetch(SOUNDS[k].url).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((ok,no)=>{const p=a.decodeAudioData(b,ok,no);if(p&&p.catch)p.catch(no)})).then(b=>{BUF[k]=b;SRC[k]='file'}).catch(()=>{SRC[k]='none'})}
+ for(const k of ['intro','fanfare'])((k==='intro'&&PRE_INTRO)?PRE_INTRO.then(b=>b||fetch(SOUNDS[k].url).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()})):fetch(SOUNDS[k].url).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()})).then(b=>new Promise((ok,no)=>{const p=a.decodeAudioData(b,ok,no);if(p&&p.catch)p.catch(no)})).then(b=>{BUF[k]=b;SRC[k]='file'}).catch(()=>{SRC[k]='none'})}
 // skip encoder padding (near-silent samples, mp3 or ogg) (near-silent samples) at the edges so the loop seam has no gap
 const LOOP={};function edges(b){const c=b.getChannelData(0),n=c.length,th=.0005;let i=0,j=n-1;while(i<n&&Math.abs(c[i])<th&&i<b.sampleRate*.2)i++;while(j>i&&Math.abs(c[j])<th&&n-j<b.sampleRate*.2)j--;return [i/b.sampleRate,(j+1)/b.sampleRate]}
 function out(){const a=A();if(!a)return null;if(!master){master=a.createGain();master.gain.value=1;master.connect(a.destination);musicG=a.createGain();musicG.gain.value=.5*volM;musicG.connect(master);sfxG=a.createGain();sfxG.gain.value=.5*volS;sfxG.connect(master)}return master}
@@ -82,6 +85,8 @@ function musicTick(){const a=A();if(!a)return;const on_=(typeof snd==='undefined
   mNext+=spb;mStep++}}
 function stopMusic(f){if(mSrc){const s=mSrc;mSrc=null;try{const a=A();if(f&&a&&s.g){const t=a.currentTime;s.g.gain.cancelScheduledValues(t);s.g.gain.setValueAtTime(s.g.gain.value,t);s.g.gain.linearRampToValueAtTime(0,t+f);s.stop(t+f+.02)}else s.stop()}catch(e){}}}
 setInterval(musicTick,90);
+// v22: called by the intro's Tap to start. Arms the intro music to play ONCE from the start (stops any earlier copy first, so a re-launch never overlaps).
+function introMusic(){stopOne();introDone=false;try{musicTick()}catch(e){}}
 function unlock(){tapped=true;const a=A();if(a&&a.state!=='running')a.resume().catch(()=>{});prerender()}
 addEventListener('pointerdown',unlock,true);addEventListener('keydown',unlock,true);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){stopMusic();const a=A();if(a&&a.state==='running')a.suspend().catch(()=>{})}else if(tapped){const a=A();if(a)a.resume().catch(()=>{});wake()}});
@@ -344,4 +349,4 @@ function initUI(){const $=id=>document.getElementById(id);if(!$('dress'))return;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initUI);else setTimeout(initUI,0);
 
 return {step,bgFar,fgNear,leavesDraw,fxWorld,pickupGlow,bossAura,bossBar,hudBack,hudFront,roarText,shakeOff,flashA,dinoSpr,dinoDecor,pal,sqs,wobble,starBurst,dust,play,buzz,award,cheer,setCalm,
- get calm(){return calm},get stars(){return stars},set stars(v){stars=v;saveDress()},get on(){return on},owned:()=>[...owned],SOUNDS,COLORS,HATS,GLASSES,BACKS,TRAILS,PETS,TABS,sfxOut:()=>{const o=out();return o?sfxG:null},vol:()=>({music:volM,sfx:volS,musicBus:musicG?musicG.gain.value:null,sfxBus:sfxG?sfxG.gain.value:null}),setVol,starsFor,st,BUF,SRC,get tapped(){return tapped},LOOP,get mKey(){return mSrc?mSrc.k:null},get oKey(){return oSrc?oSrc.k:null},get oLoop(){return oSrc?oSrc.loop:null},bpm,openDress}})();
+ get calm(){return calm},get stars(){return stars},set stars(v){stars=v;saveDress()},get on(){return on},owned:()=>[...owned],SOUNDS,COLORS,HATS,GLASSES,BACKS,TRAILS,PETS,TABS,sfxOut:()=>{const o=out();return o?sfxG:null},vol:()=>({music:volM,sfx:volS,musicBus:musicG?musicG.gain.value:null,sfxBus:sfxG?sfxG.gain.value:null}),setVol,starsFor,st,BUF,SRC,get tapped(){return tapped},LOOP,get mKey(){return mSrc?mSrc.k:null},get oKey(){return oSrc?oSrc.k:null},get oLoop(){return oSrc?oSrc.loop:null},bpm,openDress,introMusic,get introDone(){return introDone}}})();

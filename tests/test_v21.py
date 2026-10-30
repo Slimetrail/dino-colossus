@@ -1,10 +1,10 @@
-# Dino Colossus v21: cinematic intro on every app open (launch, reload, pageshow restore), tap to skip, ends at title. Run: python3 tests/test_v21.py
+# Dino Colossus v21 (updated for v22: Tap to start before the intro, version 22, credit 'A Slimetrail production'): cinematic intro on every app open (launch, reload, pageshow restore), tap to skip, ends at title. Run: python3 tests/test_v21.py
 import subprocess,time,sys,os,re,json
 from playwright.sync_api import sync_playwright
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)));PORT=8866
 srv=subprocess.Popen([sys.executable,'-m','http.server',str(PORT)],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);time.sleep(1)
 URL=f'http://localhost:{PORT}/';fails=[];passes=0;perf={}
-CREDIT='Designed and created by SlimeTrail Productions'
+CREDIT='A Slimetrail production'
 def check(c,m):
     global passes
     print(('PASS ' if c else 'FAIL ')+m)
@@ -12,9 +12,9 @@ def check(c,m):
     else: fails.append(m)
 sw=open(os.path.join(ROOT,'sw.js')).read();VER=re.search(r'VER="(\d+)"',sw).group(1)
 html=open(os.path.join(ROOT,'index.html')).read();intro=open(os.path.join(ROOT,'intro.js')).read()
-check(VER=='21','sw VER is 21');check('"intro.js?v=21"' in sw,'intro.js in SW SHELL')
-check('<script src="intro.js?v=21"></script>' in html and '?v=20' not in html,'index.html loads intro.js?v=21, no ?v=20 left')
-check('>v21 · '+CREDIT in html,'title line v21 + credit')
+check(VER=='22','sw VER is 22 (v22 bump)');check('"intro.js?v=22"' in sw,'intro.js in SW SHELL')
+check('<script src="intro.js?v=22"></script>' in html and '?v=21' not in html,'index.html loads intro.js?v=22, no ?v=21 left')
+check('>v22 · '+CREDIT in html,'title line v22 + credit')
 code=' '.join(open(os.path.join(ROOT,f)).read().lower() for f in ['index.html','game.js','vis.js','sprites.js','sw.js','intro.js'])
 for w in ['adsense','admob','doubleclick','applovin','unityads','gtag','analytics','fbq','utm_','affiliate']: check(w not in code,f'ad scan: no {w}')
 check(not re.search(r'\.(ogg|mp3|wav|png|jpg|webp)',intro),'intro.js loads no new media files')
@@ -22,6 +22,9 @@ def pg_(cx):
     pg=cx.new_page();pg.errs=[];pg.ext=[]
     pg.on('pageerror',lambda e:pg.errs.append(str(e)));pg.on('console',lambda m:m.type=='error' and pg.errs.append(m.text))
     pg.on('request',lambda r:(not r.url.startswith(URL)) and not r.url.startswith('data:') and pg.ext.append(r.url));return pg
+def gt(pg):
+    # v22: a launch shows Tap to start first; tap it to start the intro (mouse click = pointerdown, works with or without touch)
+    pg.wait_for_selector('#introTap',state='visible',timeout=10000);pg.mouse.click(420,200)
 def playing(pg): return pg.evaluate('typeof INTRO!=="undefined"&&INTRO.playing')
 def at_title(pg): return pg.evaluate("!INTRO.playing&&!document.getElementById('start').classList.contains('hide')&&getComputedStyle(document.getElementById('intro')).display==='none'&&!(window.G&&G.running)")
 try:
@@ -29,7 +32,7 @@ try:
   b=p.chromium.launch()
   cx=b.new_context(viewport={'width':844,'height':390},device_scale_factor=3,has_touch=True,is_mobile=True);pg=pg_(cx)
   for n in (1,2,3):
-    pg.goto(URL);pg.wait_for_timeout(400)
+    pg.goto(URL);gt(pg);pg.wait_for_timeout(400)
     check(playing(pg) and pg.evaluate('INTRO.runs')==1,f'launch {n}: intro plays on open')
     vis=pg.evaluate("(()=>{const c=document.getElementById('intro'),r=c.getBoundingClientRect();return r.width>=innerWidth&&r.height>=innerHeight&&+getComputedStyle(c).zIndex>=50})()");check(vis,f'launch {n}: intro covers the screen')
     if n<3:
@@ -38,10 +41,10 @@ try:
   # launch 3: let it play to the end
   t0=time.time();pg.wait_for_function('!INTRO.playing',timeout=25000);dur=time.time()-t0+.4;pg.wait_for_timeout(200)
   check(at_title(pg) and pg.evaluate('INTRO.lastEnd')=='end' and 8.5<=dur<=11.5,f'launch 3: plays through (~{dur:.1f} s) and ends at title')
-  check(CREDIT in pg.inner_text('#ver') and pg.is_visible('#ver') and 'v21' in pg.inner_text('#ver'),'title line still present after intro')
-  pg.reload();pg.wait_for_timeout(300);check(playing(pg),'intro plays after reload')
+  check(CREDIT in pg.inner_text('#ver') and pg.is_visible('#ver') and 'v22' in pg.inner_text('#ver'),'title line still present after intro')
+  pg.reload();gt(pg);pg.wait_for_timeout(300);check(playing(pg),'intro plays after reload')
   pg.keyboard.press('Space');pg.wait_for_timeout(600);check(at_title(pg),'key press skips')
-  pg.evaluate("dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}))");pg.wait_for_timeout(200)
+  pg.evaluate("dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}))");pg.wait_for_timeout(200);gt(pg);pg.wait_for_timeout(100)
   check(playing(pg) and pg.evaluate('INTRO.runs')==2,'intro plays again on pageshow (restored from background)')
   pg.mouse.click(400,200);pg.wait_for_timeout(600);check(at_title(pg),'mouse click skips')
   pg.click('#go');pg.wait_for_timeout(800);check(pg.evaluate('G.running'),'game starts normally after intro')
@@ -50,25 +53,25 @@ try:
   pg.evaluate("dispatchEvent(new PageTransitionEvent('pageshow',{persisted:false}))");pg.wait_for_timeout(200);check(not playing(pg),'normal pageshow does not double-start')
   check(not pg.errs,f'no page errors {pg.errs}');check(not pg.ext,f'no network outside the app {pg.ext}');cx.close()
   # calm: shorter, no shake
-  cx=b.new_context(viewport={'width':844,'height':390},has_touch=True);pg=pg_(cx);pg.goto(URL+'?intro=0');pg.evaluate("localStorage.dinoColossus_Calm='1'");pg.goto(URL);pg.wait_for_timeout(200)
+  cx=b.new_context(viewport={'width':844,'height':390},has_touch=True);pg=pg_(cx);pg.goto(URL+'?intro=0');pg.evaluate("localStorage.dinoColossus_Calm='1'");pg.goto(URL);gt(pg);pg.wait_for_timeout(200)
   t0=time.time();check(pg.evaluate('INTRO.calm'),'calm mode detected');pg.wait_for_function('!INTRO.playing',timeout=20000);d=time.time()-t0
   check(d<8,f'calm intro is shorter ({d:.1f} s)');check('if(!calm){' in intro,'no screen shake in calm');check(not pg.errs,'calm: no errors');cx.close()
   # reduced motion also counts as calm
-  cx=b.new_context(viewport={'width':844,'height':390},reduced_motion='reduce');pg=pg_(cx);pg.goto(URL);pg.wait_for_timeout(200);check(pg.evaluate('INTRO.calm'),'prefers-reduced-motion -> calm intro');cx.close()
+  cx=b.new_context(viewport={'width':844,'height':390},reduced_motion='reduce');pg=pg_(cx);pg.goto(URL);gt(pg);pg.wait_for_timeout(200);check(pg.evaluate('INTRO.calm'),'prefers-reduced-motion -> calm intro');cx.close()
   # mute respected: VIS.play is the only sound path, and it checks snd
   check("VIS.play(k)" in intro and not re.search(r'new Audio|AudioContext|createOscillator',intro),'intro sound only through VIS.play (respects mute + effects slider)')
   # performance: 4x CPU throttle (mid phone), 844x390 @2x
   cx=b.new_context(viewport={'width':844,'height':390},device_scale_factor=2,has_touch=True,is_mobile=True);pg=pg_(cx)
-  cdp=cx.new_cdp_session(pg);cdp.send('Emulation.setCPUThrottlingRate',{'rate':4});tw=time.time();pg.goto(URL);pg.wait_for_function('INTRO.T>7.5',timeout=30000);mid=pg.evaluate('INTRO.counts')
+  cdp=cx.new_cdp_session(pg);cdp.send('Emulation.setCPUThrottlingRate',{'rate':4});tw=time.time();pg.goto(URL);gt(pg);pg.wait_for_function('INTRO.T>7.5',timeout=30000);mid=pg.evaluate('INTRO.counts')
   pg.wait_for_function('!INTRO.playing',timeout=30000);st=pg.evaluate('INTRO.stats()');perf=st;tw=time.time()-tw
   check(8.5<=tw<=12,f'4x throttle: timeline is wall-clock (performance.now) so length stays ~9.5 s ({tw:.1f} s incl. load)')
   print('PERF 4x throttle',json.dumps(st),'particles',mid)
   check(st and st['avg']<28 and st['p95']<=34 and st['drawAvg']<4,f"frame time 4x throttle avg {st['avg']:.1f} ms p95 {st['p95']:.1f} ms, script per frame {st['drawAvg']:.2f} ms")
   check(mid['smoke']<=36 and mid['lava']<=26 and mid['ash']<=50,f'particle caps {mid}');cx.close()
-  cx=b.new_context(viewport={'width':844,'height':390},device_scale_factor=3,has_touch=True,is_mobile=True);pg=pg_(cx);pg.goto(URL);pg.wait_for_function('!INTRO.playing',timeout=30000);st=pg.evaluate('INTRO.stats()');print('PERF no throttle',json.dumps(st))
+  cx=b.new_context(viewport={'width':844,'height':390},device_scale_factor=3,has_touch=True,is_mobile=True);pg=pg_(cx);pg.goto(URL);gt(pg);pg.wait_for_function('!INTRO.playing',timeout=30000);st=pg.evaluate('INTRO.stats()');print('PERF no throttle',json.dumps(st))
   check(st['avg']<17.5 and st['p95']<18,f"unthrottled 60 fps avg {st['avg']:.1f} ms p95 {st['p95']:.1f} ms");cx.close()
   # timeline constants + skip stopwatch (skip -> intro hidden and PLAY clickable), normal and 4x CPU
-  cx=b.new_context(viewport={'width':844,'height':390},device_scale_factor=2,has_touch=True,is_mobile=True);pg=pg_(cx);pg.goto(URL);pg.wait_for_function('typeof INTRO!=="undefined"&&INTRO.playing')
+  cx=b.new_context(viewport={'width':844,'height':390},device_scale_factor=2,has_touch=True,is_mobile=True);pg=pg_(cx);pg.goto(URL);gt(pg);pg.wait_for_function('typeof INTRO!=="undefined"&&INTRO.playing')
   tm=pg.evaluate('INTRO.TIMES');check(abs(tm['TOTAL']-9.5)<.3 and tm['TE']==3.4 and abs(tm['TI']-4.7)<.05 and tm['FZ']==.1,f'timeline: chase 0-3.4, landing 4.7, 0.1 s freeze, total {tm["TOTAL"]} s')
   check('performance.now()-t0' in intro or '(now-t0)/1000' in intro,'timeline derived from performance.now, not frame counts');check("fillText('Tap to skip" in intro,'Tap to skip hint drawn every frame from the first frame');cx.close()
   JS="""()=>new Promise(r=>{const go=document.getElementById('go');const t=INTRO.skipAt;(function f(){const rc=go.getBoundingClientRect(),el=document.elementFromPoint(rc.x+rc.width/2,rc.y+rc.height/2);if(!INTRO.playing&&el&&(el===go||go.contains(el)))r(performance.now()-t);else requestAnimationFrame(f)})()})"""
@@ -77,13 +80,13 @@ try:
     for at in (.5,3.0):
       cx=b.new_context(viewport={'width':844,'height':390},device_scale_factor=3,has_touch=True,is_mobile=True);pg=pg_(cx)
       if rate>1: cx.new_cdp_session(pg).send('Emulation.setCPUThrottlingRate',{'rate':rate})
-      pg.goto(URL);pg.wait_for_function(f'typeof INTRO!=="undefined"&&INTRO.T>={at}',timeout=20000,polling=10);pg.touchscreen.tap(420,200);ms=pg.evaluate(JS);SW[f'{rate}x@{at}s']=round(ms)
+      pg.goto(URL);gt(pg);pg.wait_for_function(f'typeof INTRO!=="undefined"&&INTRO.T>={at}',timeout=20000,polling=10);pg.touchscreen.tap(420,200);ms=pg.evaluate(JS);SW[f'{rate}x@{at}s']=round(ms)
       pg.click('#go');pg.wait_for_timeout(500);ok=pg.evaluate('G.running')
       check(ms<1000 and ok,f'skip at {at} s, {rate}x CPU: playable after {ms:.0f} ms (<1000) and game starts');cx.close()
   print('SKIP STOPWATCH',json.dumps(SW))
   # offline (installed PWA): intro.js cached by SW, intro still plays offline
-  cx=b.new_context(viewport={'width':915,'height':412});pg=pg_(cx);pg.goto(URL);pg.wait_for_function("navigator.serviceWorker.ready.then(()=>1)");pg.wait_for_timeout(2500)
-  ok=pg.evaluate("caches.open('dinocol-v21').then(c=>c.match('intro.js?v=21')).then(r=>!!r)");check(ok,'intro.js in SW cache v21')
-  cx.set_offline(True);pg.reload();pg.wait_for_timeout(600);check(playing(pg),'intro plays offline');check(not pg.errs,f'offline: no errors {pg.errs}');cx.close();b.close()
+  cx=b.new_context(viewport={'width':915,'height':412});pg=pg_(cx);pg.goto(URL);gt(pg);pg.wait_for_function("navigator.serviceWorker.ready.then(()=>1)");pg.wait_for_timeout(2500)
+  ok=pg.evaluate("caches.open('dinocol-v22').then(c=>c.match('intro.js?v=22')).then(r=>!!r)");check(ok,'intro.js in SW cache v22')
+  cx.set_offline(True);pg.reload();gt(pg);pg.wait_for_timeout(600);check(playing(pg),'intro plays offline');check(not pg.errs,f'offline: no errors {pg.errs}');cx.close();b.close()
 finally: srv.kill()
 print(f'{passes} passed, {len(fails)} failed');sys.exit(1 if fails else 0)

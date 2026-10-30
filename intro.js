@@ -246,9 +246,21 @@ function start(why){if(off)return false;if(!cv){cv=document.createElement('canva
 function finish(natural){if(!playing||ending)return;ending=1;lastEnd=natural?'end':'skip';cv.style.transition=natural?`opacity ${FADE/TS}s`:'opacity .3s';cv.style.opacity='0';
  setTimeout(()=>{playing=false;cancelAnimationFrame(raf);cv.style.display='none';cv.style.pointerEvents='none';shownAt=performance.now()},natural?FADE/TS*1000:350)}
 addEventListener('keydown',e=>{if(playing&&!ending){skipAt=performance.now();finish(false)}},true);
-addEventListener('pageshow',e=>{if(e.persisted&&!(typeof G!=='undefined'&&G&&G.running))start('pageshow')});
-start('launch');
+// v22 Tap to start (like Shark Attack): phones block sound until a first tap, so a launch shows this screen first.
+// The tap unlocks audio (vis.js capture listener runs first), arms the intro music once, and starts the movie at T=0.
+let gateEl=null,gates=0,gateWhy='';
+function gateTap(e){if(!gateEl||gateEl.style.display==='none')return;if(e){e.preventDefault();e.stopPropagation()}gateEl.style.display='none';
+ try{if(typeof VIS!=='undefined'&&VIS.introMusic)VIS.introMusic()}catch(_){}start(gateWhy)}
+function gate(why){if(off)return false;gateWhy=why;if(!gateEl){gateEl=document.createElement('div');gateEl.id='introTap';gateEl.setAttribute('role','button');gateEl.setAttribute('aria-label','Tap to start');
+  gateEl.style.cssText='position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 70%,#3a1608 0%,#120804 55%,#050302 100%);touch-action:none;cursor:pointer;user-select:none;-webkit-user-select:none';
+  gateEl.innerHTML='<div style="color:#fff;font:900 40px system-ui,sans-serif;text-shadow:0 4px 0 #5a1d00,0 0 24px rgba(255,120,30,.55);animation:introTapP 1.2s infinite alternate">Tap to start</div><style>@keyframes introTapP{from{transform:scale(1);opacity:.85}to{transform:scale(1.07);opacity:1}}</style>';
+  gateEl.addEventListener('pointerdown',gateTap);document.body.appendChild(gateEl)}
+ if(playing){cancelAnimationFrame(raf);playing=false;if(cv){cv.style.display='none';cv.style.pointerEvents='none'}}
+ gates++;gateEl.style.display='flex';return true}
+addEventListener('keydown',e=>{if(gateEl&&gateEl.style.display!=='none'){gateTap(e)}},true);
+addEventListener('pageshow',e=>{if(e.persisted&&!(typeof G!=='undefined'&&G&&G.running))gate('pageshow')});
+gate('launch');
 function stats(){const a=ft.slice(5).sort((p,q)=>p-q);if(!a.length)return null;const avg=a.reduce((s,v)=>s+v,0)/a.length;const w=wk.slice(5).sort((p,q)=>p-q),wa=w.reduce((s,v)=>s+v,0)/w.length;return {n:a.length,avg,p95:a[Math.floor(a.length*.95)],max:a[a.length-1],fps:1000/avg,drawAvg:wa,drawP95:w[Math.floor(w.length*.95)]}}
-return {start,finish,stats,seek:v=>{t0=performance.now()-v/TS*1000;if(paused)T=v},pause:()=>{if(!paused){paused=1;pauseAt=performance.now()}},resume:()=>{if(paused){t0+=performance.now()-pauseAt;paused=0}},get hiddenAt(){return shownAt},get skipAt(){return skipAt},get T(){return T},get playing(){return playing},get runs(){return runs},get lastEnd(){return lastEnd},get calm(){return calm},get off(){return off},
+return {start,finish,stats,gate,get gates(){return gates},get gateUp(){return !!gateEl&&gateEl.style.display!=='none'},seek:v=>{t0=performance.now()-v/TS*1000;if(paused)T=v},pause:()=>{if(!paused){paused=1;pauseAt=performance.now()}},resume:()=>{if(paused){t0+=performance.now()-pauseAt;paused=0}},get hiddenAt(){return shownAt},get skipAt(){return skipAt},get T(){return T},get playing(){return playing},get runs(){return runs},get lastEnd(){return lastEnd},get calm(){return calm},get off(){return off},
  get counts(){return {smoke:P.smoke.length,lava:P.lava.length,ash:P.ash.length,dust:P.dust.length}},TIMES:{TE,TB,TI,FZ,TT,TEND,FADE,TOTAL:TEND+FADE}};
 })();

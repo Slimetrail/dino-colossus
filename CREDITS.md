@@ -1,9 +1,9 @@
 # Dino Colossus credits
 
-Designed and created by SlimeTrail Productions
+A Slimetrail production
 
 ## Music (v19, loops updated v20)
-In game: "Designed and created by SlimeTrail Productions".
+In game: "A Slimetrail production" (one credit line only, v22).
 
 - `sounds/intro-elise-dino-variation.ogg` (title intro, plays once): our arrangement of the public-domain Für Elise motif.
 - `sounds/dino-main-loop.ogg` (main play music, whole file loops).

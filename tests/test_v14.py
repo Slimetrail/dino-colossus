@@ -29,7 +29,7 @@ try:
   cx=ctx(b);pg=pg_(cx)
   pg.add_init_script("window.__starts=0;const _o=AudioBufferSourceNode.prototype.start;AudioBufferSourceNode.prototype.start=function(){if(!(this.context instanceof OfflineAudioContext))window.__starts++;return _o.apply(this,arguments)};const _s=OscillatorNode.prototype.start;OscillatorNode.prototype.start=function(){if(!(this.context instanceof OfflineAudioContext))window.__starts++;return _s.apply(this,arguments)}")
   pg.goto(URL);pg.wait_for_timeout(1500)
-  ver=pg.inner_text('#ver');check('Designed and created by SlimeTrail Productions' in ver and pg.is_visible('#ver'),f'credits line visible on menu: {ver!r}')
+  ver=pg.inner_text('#ver');check('A Slimetrail production' in ver and pg.is_visible('#ver'),f'credits line visible on menu: {ver!r}')
   pg.screenshot(path=SHOTS+'/menu-credits.png')
   check(pg.evaluate('__starts')==0 and not pg.evaluate('VIS.tapped'),'no sound before a tap')
   pg.click('#go');pg.wait_for_timeout(3000)

@@ -10,7 +10,7 @@ def check(c,m):
     if c: passes+=1
     else: fails.append(m)
 NEW=['dino-main-loop.ogg','dino-boss-loop.ogg','intro-elise-dino-variation.ogg','boss-beaten-fanfare.ogg'];OLD=['music-pastoral.mp3','music-minuet.mp3']
-CREDIT='Designed and created by SlimeTrail Productions'
+CREDIT='A Slimetrail production'
 sw=open(os.path.join(ROOT,'sw.js')).read();VER=re.search(r'VER="(\d+)"',sw).group(1)
 check(int(VER)>=20,f'sw VER is 20+ ({VER})')
 for f in NEW: check(os.path.isfile(os.path.join(ROOT,'sounds',f)) and f'"sounds/{f}"' in sw,f'{f} exists and is in SW SHELL')
