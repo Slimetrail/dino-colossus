@@ -1,4 +1,4 @@
-# Dino Colossus v19 music tests: original CC0 music (intro once, main + boss loops, boss-beaten fanfare once), Beethoven mp3s removed, credit line (Playwright). Run: python3 tests/test_v19.py
+# Dino Colossus v19/v20 music tests (v20: whole-file loops with no lead-in/tail): original CC0 music (intro once, main + boss loops, boss-beaten fanfare once), Beethoven mp3s removed, credit line (Playwright). Run: python3 tests/test_v19.py
 import subprocess,time,sys,os,re
 from playwright.sync_api import sync_playwright
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)));PORT=8864
@@ -12,14 +12,17 @@ def check(c,m):
 NEW=['dino-main-loop.ogg','dino-boss-loop.ogg','intro-elise-dino-variation.ogg','boss-beaten-fanfare.ogg'];OLD=['music-pastoral.mp3','music-minuet.mp3']
 CREDIT='Designed and created by SlimeTrail Productions'
 sw=open(os.path.join(ROOT,'sw.js')).read();VER=re.search(r'VER="(\d+)"',sw).group(1)
-check(VER=='19','sw VER is 19')
+check(VER=='20','sw VER is 20')
 for f in NEW: check(os.path.isfile(os.path.join(ROOT,'sounds',f)) and f'"sounds/{f}"' in sw,f'{f} exists and is in SW SHELL')
+import hashlib
+MD5={'dino-main-loop.ogg':('a495346391b141e736364289765a12eb',152.308),'dino-boss-loop.ogg':('0a4464f5f9dcc6493ad98f2550a4b6ce',118.261),'intro-elise-dino-variation.ogg':('f8c11f2906247d3ac76c41862fe93401',40.0),'boss-beaten-fanfare.ogg':('e2272e08349efba4e2c7506f93c19c7e',5.3)}
+for f,(m,_) in MD5.items(): check(hashlib.md5(open(os.path.join(ROOT,'sounds',f),'rb').read()).hexdigest()==m,f'{f} md5 {m}')
 for f in ['OWN-WORK-CC0.txt','VSCO-2-CE-upright-CC0-1.0.txt']: check(os.path.isfile(os.path.join(ROOT,'licences',f)),f'licences/{f} present')
 code={n:open(os.path.join(ROOT,n)).read() for n in ['vis.js','game.js','sprites.js','sw.js','index.html']}
 for f in OLD: check(not os.path.exists(os.path.join(ROOT,'sounds',f)) and not any(f in c for c in code.values()),f'{f} gone and not referenced')
 check(not any(w in c for c in code.values() for w in ['Beethoven','Musopen']),'no Beethoven/Musopen text in code')
 check(CREDIT in code['index.html'] and CREDIT in open(os.path.join(ROOT,'CREDITS.md')).read(),'credit line in index.html and CREDITS.md')
-check('?v=18' not in code['index.html'] and '?v=19' in code['index.html'],'index.html ?v= bumped to 19')
+check('?v=19' not in code['index.html'] and '?v=20' in code['index.html'],'index.html ?v= bumped to 20')
 def pg_(cx):
     pg=cx.new_page();pg.errs=[];pg.bad=[];pg.req=[]
     pg.on('pageerror',lambda e:pg.errs.append(str(e)));pg.on('console',lambda m:m.type=='error' and pg.errs.append(m.text))
@@ -42,7 +45,7 @@ try:
   check(pg.evaluate('VIS.mKey')=='music' and pg.evaluate('VIS.oKey') is None,'main loop plays in game, intro stopped')
   urls=' '.join(pg.req);check('sounds/dino-main-loop.ogg' in urls and 'sounds/dino-boss-loop.ogg' in urls,'music fetched from new urls')
   lp=pg.evaluate("({m:VIS.LOOP.music,b:VIS.LOOP.bossmusic,dm:VIS.BUF.music.duration,db:VIS.BUF.bossmusic.duration})")
-  check(lp['m'][0]<.01 and lp['dm']-lp['m'][1]<.01 and lp['b'][0]<.01 and lp['db']-lp['b'][1]<.01,f'whole file loops (no trim) {lp}')
+  check(abs(lp['dm']-152.308)<.05 and abs(lp['db']-118.261)<.05,f"loop durations 152.308/118.261 s ({lp['dm']:.3f}/{lp['db']:.3f})");check(lp['m'][0]<.01 and lp['dm']-lp['m'][1]<.01 and lp['b'][0]<.01 and lp['db']-lp['b'][1]<.01,f'whole file loops (no trim) {lp}')
   pg.screenshot(path=SHOTS+'/playing-844x390.png')
   pg.evaluate('__dc.startBoss()');pg.wait_for_timeout(800);check(pg.evaluate('VIS.mKey')=='bossmusic','boss loop during boss')
   pg.evaluate("()=>{const b=__dc.G.boss;b.hp=0;b.gone=1}");

@@ -2,7 +2,7 @@
 
 Designed and created by SlimeTrail Productions
 
-## Music (v19)
+## Music (v19, loops updated v20)
 In game: "Designed and created by SlimeTrail Productions".
 
 - `sounds/intro-elise-dino-variation.ogg` (title intro, plays once): our arrangement of the public-domain Für Elise motif.

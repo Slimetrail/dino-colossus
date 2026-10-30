@@ -14,6 +14,8 @@ def check(c,m):
 def pg_(cx):
     pg=cx.new_page();errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:m.type=='error' and errs.append(m.text));pg.errs=errs;return pg
 def ctx(b,**k): return b.new_context(viewport={'width':915,'height':412},has_touch=True,**k)
+import hashlib
+for f,m in [('dino-main-loop','a495346391b141e736364289765a12eb'),('dino-boss-loop','0a4464f5f9dcc6493ad98f2550a4b6ce')]: check(hashlib.md5(open(os.path.join(ROOT,'sounds',f+'.ogg'),'rb').read()).hexdigest()==m,f'{f}.ogg is the v20 whole-file loop')
 for f in MUS: check(os.path.getsize(os.path.join(ROOT,'sounds',f+'.ogg'))<4000000,f'{f}.ogg under 4 MB')
 SEAM="""(async()=>{const r={};for(const k of ['music','bossmusic']){const b=VIS.BUF[k],[ls,le]=VIS.LOOP[k],sr=b.sampleRate;
  const o=new OfflineAudioContext(1,Math.ceil(sr*6),sr),s=o.createBufferSource();s.buffer=b;s.loop=true;s.loopStart=ls;s.loopEnd=le;s.connect(o.destination);s.start(0,le-3);
