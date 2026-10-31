@@ -45,8 +45,11 @@ const DK={
  throwT:x=>Math.max(40,Math.round(64/Math.pow(x,.25))), // frames a throw is in the air (reaction window): 64 / 54 / 40 floor (0.67 s)
  extra:x=>Math.min(2,Math.floor(Math.log2(x)+1e-9)) // extra simultaneous boss throws / challenge level: 0 / 1 / 2
 };
-// v22 (Jeremy: "on hard reduce the spear guys, there are too many"): Hard spawns 40% of the old spear-people count per section. Easy/Medium unchanged.
-const RANGER_MUL={hard:.35};
+// v22 (Jeremy: "on hard reduce the spear guys, there are too many"): Hard multiplier .35. Easy/Medium unchanged.
+// v23 (Jeremy: "increase the spear people by 20 percent ... in hard"): .35 x 1.2 = .42.
+const RANGER_MUL={hard:.35*1.2};
+// v23 (Jeremy: "decrease the rolling rocks by 30 percent in hard"): Hard rolling boulders spawn 30% less often (gap / .7). Falling meteor rocks unchanged.
+const BOULDER_MUL={hard:.7};
 function rangerN(n,RT){return Math.min(12,Math.round(Math.min(5,1+(n>>1))*RT*(RANGER_MUL[G&&G.diff]||1)))}
 function thrCfg(){const x=Dbase();return {every:DK.throwEvery(x),T:DK.throwT(x)}}
 if(LS.dinoColossus_Best&&!LS.dinoColossus_Best_hard)LS.dinoColossus_Best_hard=LS.dinoColossus_Best;
@@ -383,7 +386,7 @@ function update(){const d=G.d;{const zt=G.boss&&!G.boss.gone?1:0;if(Math.abs(zt-
   if(ov(d,r)&&!G.hit){if(d.vy>0&&d.y+d.h-r.y<18){d.vy=-8;if(r.stun){poof(r.x+12,r.y+r.h/2);G.score+=50;hud();msg('Knocked out! +50',r.x,r.y-30,'#ffea00');r.y=GY+999}else{hurt('Ouch! Pointy spear!');msg('Spear points up! Jump OVER them.',r.x+12,r.y-30,'#ff8a80')}}else if(!r.stun){if(G.belly)dropLoad();else G.hit=30;knock(r)}}}
  G.rangers=G.rangers.filter(r=>r.y<GY+300);
  // boulders
- if(!G.boss&&!G.inBonus&&(G.boulT-=1/60)<=0){G.boulT=Math.max(1.6,(R(6,10)-Math.min(3,G.cur*.3))/DK.rate(Dx()));const x=G.camX+VW+20,t=groundTop(x);if(t!=null)G.boulders.push({x,y:t-28,w:28,h:28,vx:-2.6*DK.spd(Dx()),sp:DK.spd(Dx()),vy:0,a:0})}
+ if(!G.boss&&!G.inBonus&&(G.boulT-=1/60)<=0){G.boulT=Math.max(1.6,(R(6,10)-Math.min(3,G.cur*.3))/DK.rate(Dx()))/(BOULDER_MUL[G.diff]||1);const x=G.camX+VW+20,t=groundTop(x);if(t!=null)G.boulders.push({x,y:t-28,w:28,h:28,vx:-2.6*DK.spd(Dx()),sp:DK.spd(Dx()),vy:0,a:0})}
  G.boulders=G.boulders.filter(b=>{b.vx=-2.6*(b.sp||1);moveBody(b);b.a-=.09;if(b.hitWall){b.vy=-7;b.x-=2}if(ov(d,b)&&!G.hit){if(G.belly)dropLoad();else G.hit=30;knock(b)}return b.y<GY+300&&b.x>G.camX-80});
  // volcano
  for(const v of G.vols){if(!G.busyVol&&d.on&&d.x+d.w>v.x&&d.x<v.x+v.w){if(v.end&&!v.done){v.done=1;const n=G.belly,bonus=100*v.sec+n*50;G.score+=bonus;G.banner={t:'SECTION '+v.sec+' CLEAR! +'+bonus,l:2.4};G.chT=Math.max(G.chT,6);if(n)erupt(v);else{G.belly=0;boom(0,v)}beep(784,.15);setTimeout(()=>beep(1046,.3),160)}else if(G.belly&&!v.end)erupt(v)}}
@@ -593,20 +596,19 @@ let acc=0,last=0;function loop(t){const dt=Math.min(100,t-last||16);last=t;acc+=
 // ---- v15 HARD-ONLY silly human: warning first (1.2 s), then ONE random harmless effect. Never on easy/medium.
 // stink: can't run sideways (jump still works); bubble: floats + drifts, pops, safe drop; pogo: auto-bounces.
 // Calm halves effect time. G.silGrace: while an effect runs (+1.5 s), falling into a pit/lava just puts you back, no hurt.
-const SIL={gap:[20,35],warn:1.2,dur:{stink:1.8,bubble:2.6,pogo:2},kinds:['stink','bubble','pogo'],
+const SIL={gap:[20,35],warn:1.2,walk:14,wspd:1.1,dur:{stink:1.8,bubble:2.6,pogo:2},kinds:['stink','bubble','pogo'],
  say:{stink:'TOOT! NO RUNNING!',bubble:'BLOOP! BUBBLE RIDE!',pogo:'BOING! POGO!'},snd:{stink:'toot',bubble:'whoosh',pogo:'boing'}};
 function calmOn(){try{return LS.dinoColossus_Calm==='1'}catch(e){return false}}
 function sillyBusy(){const b=G.boss;return G.inBonus||G.dying||!G.running||G.paused||G.banner||G.secBanner&&G.secBanner.l>1.8||(b&&!b.gone&&(b.tele||b.roar||G.bossHint&&G.bossHint.l>4))}
-function sillyStart(k){const s=G.sil;k=k||pickA(SIL.kinds.filter(q=>q!==s.last));s.last=k;s.k=k;s.warn=SIL.warn;s.side=Math.random()<.5?-1:1;s.fx=null;s.eaten=0;VIS.play('warn')}
-// v22 (Jeremy: "the silly human should be eaten not popping up"): the silly human runs from the screen edge straight into the dino's mouth during the
-// warning and is gulped when the warning ends, wherever the dino is, so its trick always happens. It is drawn only (no hitbox): it can never hurt the dino.
-function sillyHum(){const s=G.sil,d=G.d;if(!s||!(s.warn>0))return null;const p=Math.min(1,Math.max(0,1-s.warn/SIL.warn)),e=p*p*(3-2*p);
- const ex=s.side<0?G.camX+24:G.camX+VW-44,gt=groundTop(ex+10),ey=(gt==null?GY:gt)-46,tx=d.x+d.w/2-11+(d.f||1)*d.w*.35,ty=d.y+d.h*.2-12;
- return {x:ex+(tx-ex)*e,y:ey+(ty-ey)*e,p,sc:1-.45*e}}
+function sillyStart(k){const s=G.sil;k=k||pickA(SIL.kinds.filter(q=>q!==s.last));s.last=k;s.k=k;s.seen=(s.seen||0)+1;s.warn=SIL.walk;s.side=(G.d&&G.d.f<0)?-1:1;s.hx=s.side<0?G.camX+VW*.3-22:G.camX+VW*.7;s.fx=null;s.eaten=0;VIS.play('warn')}
+// v23 (Jeremy: "you have to eat the human walking, not the human racing to be eaten"): the silly human no longer races into the dino's mouth.
+// It appears on the ground ahead of the dino and walks away (1.1 px/frame, the dino runs 3.5); its trick only happens if the player catches and eats it.
+// If it walks off screen or SIL.walk seconds pass, it is gone with no trick. It still can never hurt the dino.
+function sillyHum(){const s=G.sil;if(!s||s.hx==null)return null;const gt=groundTop(s.hx+11);return {x:s.hx,y:(gt==null?GY:gt)-46,p:0,sc:1,w:22,h:46}}
 function sillyUpd(d){if(G.diff!=='hard'){G.sil=null;return}if(!G.sil)G.sil={next:R(SIL.gap[0],SIL.gap[1]),n:0};const s=G.sil;if(G.silGrace>0)G.silGrace--;
  if(s.fx){s.fx.t-=1/60;if(s.fx.k=='stink'&&(G.el*60|0)%6==0)G.smoke.push({x:d.x+d.w/2+R(-14,14),y:d.y+R(0,d.h),vx:R(-.6,.6),vy:-.5,r:9,l:.6,g:1});
   if(s.fx.t<=0){const k=s.fx.k;s.fx=null;G.silGrace=90;if(k=='bubble'){VIS.play('pop');G.inv=Math.max(G.inv||0,90);poof(d.x+d.w/2,d.y+d.h/2,6);sillySafeX(d)}s.next=R(SIL.gap[0],SIL.gap[1])}return}
- if(s.warn>0){s.warn-=1/60;if(s.warn<=0){const k=s.k,c=calmOn()?.5:1;s.eaten=1;G.silEaten=(G.silEaten||0)+1;poof(d.x+d.w/2,d.y+d.h*.3,5);msg('GULP! Silly human!',d.x,d.y-40,'#ffeb3b');VIS.play('pop');s.fx={k,t:SIL.dur[k]*c,T:SIL.dur[k]*c,ph:0};s.n++;G.silGrace=Math.round(SIL.dur[k]*c*60)+90;VIS.play(SIL.snd[k]);if(k=='bubble'){d.vy=-2;sillySafeX(d)}if(!calmOn()){G.shake=Math.max(G.shake||0,4);VIS.buzz(25)}}return}
+ if(s.warn>0){s.warn-=1/60;s.hx+=s.side*SIL.wspd;const hm=sillyHum(),gone=s.hx<G.camX-40||s.hx>G.camX+VW+40;if(hm&&!G.hit&&ov(d,hm)){s.warn=0;s.hx=null;s.caught=1}else if(!hm||gone||s.warn<=0){s.warn=0;s.hx=null;s.missed=(s.missed||0)+1;s.next=R(SIL.gap[0],SIL.gap[1]);return}else return;{const k=s.k,c=calmOn()?.5:1;s.eaten=1;G.silEaten=(G.silEaten||0)+1;poof(d.x+d.w/2,d.y+d.h*.3,5);msg('GULP! Silly human!',d.x,d.y-40,'#ffeb3b');VIS.play('pop');s.fx={k,t:SIL.dur[k]*c,T:SIL.dur[k]*c,ph:0};s.n++;G.silGrace=Math.round(SIL.dur[k]*c*60)+90;VIS.play(SIL.snd[k]);if(k=='bubble'){d.vy=-2;sillySafeX(d)}if(!calmOn()){G.shake=Math.max(G.shake||0,4);VIS.buzz(25)}}return}
  if((s.next-=1/60)<=0){if(sillyBusy())s.next=1;else sillyStart()}}
 // bubble drift stays over solid ground so the pop never drops you into a pit or lava
 function sillySafeX(d){const cx=d.x+d.w/2;if(groundTop(cx)!=null&&groundTop(d.x+2)!=null&&groundTop(d.x+d.w-2)!=null)return;for(let o=10;o<400;o+=10)for(const sg of[-1,1]){const x=cx+sg*o;if(groundTop(x-d.w/2-2)!=null&&groundTop(x+d.w/2+2)!=null&&groundTop(x)!=null&&x-d.w/2>G.camX+4){d.x=x-d.w/2;return}}}
@@ -635,4 +637,4 @@ function sillyFx(s,d,cx,cy){
  const f=s.fx;if(!f)return;const ic2={stink:'💨',bubble:'🫧',pogo:'🦘'}[f.k];silBanner(ic2+' '+SIL.say[f.k]+' '+ic2,'#2e7d32','#fff',1,.75);if(f.k=='stink'){ctx.save();for(let i=0;i<5;i++){const a=G.el*2+i*1.25;ctx.globalAlpha=.45;ctx.fillStyle=i%2?'#9ccc65':'#7cb342';ctx.beginPath();ctx.arc(cx+Math.cos(a)*20,cy+Math.sin(a)*12,11,0,6.283);ctx.fill()}ctx.restore()}
  else if(f.k=='bubble'){ctx.save();const r=Math.max(d.w,d.h)*.8+Math.sin(G.el*6)*2;ctx.globalAlpha=.35;ctx.fillStyle='#b3e5fc';ctx.beginPath();ctx.arc(cx,cy,r,0,6.283);ctx.fill();ctx.globalAlpha=.9;ctx.strokeStyle='#e1f5fe';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx-r*.4,cy-r*.45,4,0,6.283);ctx.fill();ctx.restore()}
  else if(f.k=='pogo'){ctx.save();ctx.strokeStyle='#ff7043';ctx.lineWidth=3;ctx.beginPath();const by=d.y+d.h;for(let i=0;i<5;i++){ctx.lineTo(cx+(i%2?-6:6),by+i*3)}ctx.stroke();ctx.restore()}}
-window.__dc={rangerN,RANGER_MUL,sillyHum,DMUL,Dx,Dbase,DK,rampP,thrCfg,SIL,sillyStart,sillyUpd,BIG_SPD,BIG_CHANCE,poof,msg,useAtk,ITEMS,THROW,hurt,say,loadTop,insertTop,qualifies,topBest,showEnd,readLines,pickVoice,stageOf,STAGES:{FAT_AT,ROLL_AT,FAT_SPD,FAT_JMP,ROLL_JMP,ROLL_MAX,ROLL_ACC,ROLL_FRIC,ROLL_CAP},get G(){return G},get CHALLENGES(){return CHALLENGES},CRIT,get diff(){return diff},get ORDER(){return ORDER},loseLife,respawn,safeSpot,enterBonus,exitBonus,askCont,contYes,contNo,mystery,breakBrick,BOSSES,NBOSS,ARCH,bossHP,bossSpd,saveRun,loadRun,clearRun,champion,bossesBeat,GOOD,BAD,start,startChallenge,startBoss,enterBonus,exitBonus,UNL,usePower,erupt,cap,edgeIn,genSection,groundTop,get unl(){return unl},get pick(){return pick},consts:{T,GY,JV,GRAV,SPD,SEC_L},secLen,get view(){return {S,VW,VH,WY,OY,ZK,AW:AW()}}};
+window.__dc={rangerN,RANGER_MUL,BOULDER_MUL,sillyHum,DMUL,Dx,Dbase,DK,rampP,thrCfg,SIL,sillyStart,sillyUpd,BIG_SPD,BIG_CHANCE,poof,msg,useAtk,ITEMS,THROW,hurt,say,loadTop,insertTop,qualifies,topBest,showEnd,readLines,pickVoice,stageOf,STAGES:{FAT_AT,ROLL_AT,FAT_SPD,FAT_JMP,ROLL_JMP,ROLL_MAX,ROLL_ACC,ROLL_FRIC,ROLL_CAP},get G(){return G},get CHALLENGES(){return CHALLENGES},CRIT,get diff(){return diff},get ORDER(){return ORDER},loseLife,respawn,safeSpot,enterBonus,exitBonus,askCont,contYes,contNo,mystery,breakBrick,BOSSES,NBOSS,ARCH,bossHP,bossSpd,saveRun,loadRun,clearRun,champion,bossesBeat,GOOD,BAD,start,startChallenge,startBoss,enterBonus,exitBonus,UNL,usePower,erupt,cap,edgeIn,genSection,groundTop,get unl(){return unl},get pick(){return pick},consts:{T,GY,JV,GRAV,SPD,SEC_L},secLen,get view(){return {S,VW,VH,WY,OY,ZK,AW:AW()}}};

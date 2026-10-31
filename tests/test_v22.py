@@ -15,9 +15,9 @@ def check(c,m):
     if c: passes+=1
     else: fails.append(m)
 sw=open(os.path.join(ROOT,'sw.js')).read();html=open(os.path.join(ROOT,'index.html')).read();VER=re.search(r'VER="(\d+)"',sw).group(1)
-check(VER=='22' and sw.count('?v=22')==4 and '?v=21' not in sw,'sw VER 22 and SHELL ?v=22')
-check(html.count('?v=22')==5 and '?v=21' not in html,'index.html ?v=22 everywhere')
-check('>v22 · A Slimetrail production<' in html,'title footer reads "v22 · A Slimetrail production"')
+check(VER=='23' and sw.count('?v=23')==4 and '?v=22' not in sw,'sw VER 23 and SHELL ?v=23')
+check(html.count('?v=23')==5 and '?v=22' not in html,'index.html ?v=23 everywhere')
+check('>v23 · A Slimetrail production<' in html,'title footer reads "v23 · A Slimetrail production"')
 check('SlimeTrail' not in html and 'Designed and created' not in html and 'sound effects by' not in html.lower(),'no old credit wording or second credit line in index.html')
 cr=open(os.path.join(ROOT,'CREDITS.md')).read();check(CREDIT in cr and 'SlimeTrail' not in cr,'CREDITS.md uses the one credit wording')
 check(os.path.exists(os.path.join(ROOT,'CHANGES-v22.md')),'CHANGES-v22.md exists')
@@ -95,20 +95,20 @@ try:
   cx=b.new_context(viewport={'width':915,'height':412});pg=pg_(cx);pg.goto(URL);pg.wait_for_selector('#introTap');pg.keyboard.press('Enter');pg.wait_for_timeout(300)
   check(pg.evaluate('INTRO.playing') and pg.evaluate('INTRO.runs')==1,'a key press also starts the intro (and does not skip it)');cx.close()
   # 9 credit on screen
-  cx=mob(b);pg=pg_(cx);pg.goto(URL+'?intro=0');ver=pg.inner_text('#ver');check(ver.strip()=='v22 · A Slimetrail production' and pg.is_visible('#ver'),f'title footer shows exactly {ver!r}');cx.close()
+  cx=mob(b);pg=pg_(cx);pg.goto(URL+'?intro=0');ver=pg.inner_text('#ver');check(ver.strip()=='v23 · A Slimetrail production' and pg.is_visible('#ver'),f'title footer shows exactly {ver!r}');cx.close()
   # 10 update button: never on first install, appears once after a new version takes over, tap reloads
   cx=b.new_context(viewport={'width':844,'height':390});pg=pg_(cx);pg.goto(URL2+'?intro=0')
   pg.wait_for_function("navigator.serviceWorker.controller!==null",timeout=15000);pg.wait_for_timeout(1500)
   check(not pg.is_visible('#updb') and pg.evaluate('DINO_UPD.shown')==0,'first install (no previous controller): no update button')
   pg.reload();pg.wait_for_function("navigator.serviceWorker.controller!==null",timeout=15000);pg.evaluate("dispatchEvent(new Event('focus'))");pg.wait_for_timeout(1500)
   check(not pg.is_visible('#updb'),'same version re-check: no update button')
-  s2=open(os.path.join(APP,'sw.js')).read().replace('const VER="22"','const VER="22.9"');open(os.path.join(APP,'sw.js'),'w').write(s2)
+  s2=open(os.path.join(APP,'sw.js')).read().replace('const VER="23"','const VER="23.9"');open(os.path.join(APP,'sw.js'),'w').write(s2)
   for _ in range(12):
     pg.evaluate("dispatchEvent(new Event('focus'))")
     try: pg.wait_for_selector('#updb',state='visible',timeout=2500);break
     except Exception: pass
   pg.wait_for_selector('#updb',state='visible',timeout=3000)
-  keys=pg.evaluate("caches.keys()");check('dinocol-v22.9' in keys,f'button only after the new version is fully cached {keys}')
+  keys=pg.evaluate("caches.keys()");check('dinocol-v23.9' in keys,f'button only after the new version is fully cached {keys}')
   pg.evaluate("document.dispatchEvent(new Event('visibilitychange'))");pg.wait_for_timeout(1500)
   check(pg.evaluate('DINO_UPD.shown')==1,'update button appears once')
   bb=pg.locator('#updb').bounding_box();check(bb and bb['height']>=44 and bb['x']<40 and bb['y']+bb['height']>=380,f'button is small, bottom-left, tappable {bb}')
@@ -119,7 +119,7 @@ try:
   # 11 update during a run waits until the run is over
   cx=b.new_context(viewport={'width':844,'height':390});pg=pg_(cx);pg.goto(URL2+'?intro=0');pg.wait_for_function("navigator.serviceWorker.controller!==null",timeout=15000)
   pg.wait_for_timeout(800);pg.click('#go');pg.wait_for_timeout(600)
-  s2=open(os.path.join(APP,'sw.js')).read().replace('const VER="22.9"','const VER="22.8"');open(os.path.join(APP,'sw.js'),'w').write(s2)
+  s2=open(os.path.join(APP,'sw.js')).read().replace('const VER="23.9"','const VER="23.8"');open(os.path.join(APP,'sw.js'),'w').write(s2)
   for _ in range(12):
     pg.evaluate("dispatchEvent(new Event('focus'))")
     try: pg.wait_for_function('DINO_UPD.ready',timeout=2500);break
@@ -134,13 +134,9 @@ try:
   print('SPEAR PEOPLE PER SECTION',json.dumps(tab))
   check(all(r['now']==r['old'] for d in ['easy','medium'] for r in tab[d]),'Easy and Medium spear-people counts unchanged')
   ho=sum(r['old'] for r in tab['hard']);hn=sum(r['now'] for r in tab['hard'])
-  check(hn<=ho*.5 and hn>0,f'Hard spear people sections 1-10: {ho} before -> {hn} now (half or fewer)')
-  res=pg.evaluate("""()=>new Promise(ok=>{const D=__dc,G=D.G;let n=0,eaten=0,hurt=0;const h0=G.hearts+G.lives*10;
-    function one(){if(n>=6){ok({n,eaten,hurt:(G.hearts+G.lives*10)<h0,se:G.silEaten});return}G.littles=[];G.rangers=[];G.boulders=[];G.inv=9999;G.sil.fx=null;G.banner=null;
-     const e0=G.silEaten||0;D.sillyStart();n++;const t0=performance.now();(function w(){G.littles=[];G.rangers=[];G.boulders=[];if((G.silEaten||0)>e0){eaten++;setTimeout(one,200);return}if(performance.now()-t0>4000){setTimeout(one,10);return}requestAnimationFrame(w)})()}
-    one()})""")
-  check(res['eaten']==res['n']==6,f"silly human eaten every time with no input (within 4 s): {res}")
-  check('sillyHum' in open(os.path.join(ROOT,'game.js')).read(),'silly human drawn moving to the dino (no hitbox, cannot hurt)')
+  check(hn<=ho*.55 and hn>0,f'Hard spear people sections 1-10: {ho} before -> {hn} now (v23: v22 x1.2, still well under the old count)')
+  # v23 replaced the v22 'always eaten with no input' rule (Jeremy: eat the walking human, not the one racing to be eaten); see tests/test_v23.py
+  check('sillyHum' in open(os.path.join(ROOT,'game.js')).read(),'silly human still drawn (no hitbox that can hurt)')
   check(not pg.errs,f'hard: no errors {pg.errs}');cx.close()
   b.close()
 finally: srv.kill();srv2.kill();shutil.rmtree(TMP,ignore_errors=True)

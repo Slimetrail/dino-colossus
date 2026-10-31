@@ -96,26 +96,26 @@ try:
     check(n==0,f'{d}: no silly human in 2 min of play')
   pg.evaluate("localStorage.dinoColossus_Diff='hard'");pg.reload();pg.wait_for_timeout(300);pg.click('#go');pg.wait_for_timeout(2500)
   src=pg.evaluate('({...VIS.SRC})');check(all(src.get(k)=='file' for k in SIL),f'silly CC0 files load after first tap {[src.get(k) for k in SIL]}')
-  cnt=pg.evaluate("()=>{const G=__dc.G;let n=0,first=null;for(let i=0;i<60*120;i++){G.hearts=3;G.inv=10;update();if(G.sil&&G.sil.warn>0&&first==null)first=G.el}return {n:G.sil?G.sil.n:0,first}}")
+  cnt=pg.evaluate("()=>{const G=__dc.G;let n=0,first=null;for(let i=0;i<60*120;i++){G.hearts=3;G.inv=10;update();if(G.sil&&G.sil.warn>0&&first==null)first=G.el}return {n:G.sil?G.sil.seen:0,first}}")
   check(cnt['n']>=3 and cnt['first'] and 19<cnt['first']<40,f'hard: silly human appears every ~20-35 s ({cnt})')
   # warning shot + each effect + safety
   pg.evaluate("()=>{const G=__dc.G;G.boulders=[];G.banner=null;G.secBanner=null;__dc.sillyStart('stink')}");pg.wait_for_timeout(300)
   check(pg.evaluate('__dc.G.sil.warn>0.5'),'warning shows first (>=1 s telegraph)');pg.screenshot(path=SHOTS+'/hard-warning.png')
-  pg.wait_for_timeout(1100);
+  pg.evaluate("__dc.G.sil.hx=__dc.G.d.x;__dc.G.hit=0");pg.wait_for_timeout(1100);  # v23: the dino has to catch the walking silly human; place it on the dino
   # stink: hold right -> no sideways move; jump works
   r=pg.evaluate('''async()=>{const G=__dc.G,d=G.d;keys.arrowright=true;const x0=d.x;await new Promise(r=>setTimeout(r,500));const moved=d.x-x0;keys[' ']=true;await new Promise(r=>setTimeout(r,150));const jumped=d.vy<0||!d.on;keys[' ']=false;keys.arrowright=false;return {k:G.sil.fx&&G.sil.fx.k,moved,jumped}}''')
   check(r['k']=='stink' and abs(r['moved'])<1 and r['jumped'],f'stink cloud stops running but jump works {r}')
   pg.screenshot(path=SHOTS+'/hard-stink.png')
   for k in ['bubble','pogo']:
-    pg.evaluate(f"()=>{{const G=__dc.G;G.sil.fx=null;G.sil.warn=0;__dc.sillyStart('{k}');G.sil.warn=.01}}");pg.wait_for_timeout(700)
+    pg.evaluate(f"()=>{{const G=__dc.G;G.sil.fx=null;G.sil.warn=0;__dc.sillyStart('{k}');G.sil.warn=.5;__dc.G.sil.hx=__dc.G.d.x;__dc.G.hit=0}}");pg.wait_for_timeout(700)
     check(pg.evaluate(f"__dc.G.sil.fx&&__dc.G.sil.fx.k=='{k}'"),f'{k} effect runs');pg.screenshot(path=SHOTS+f'/hard-{k}.png')
   # safety sim: start each effect many times over random spots incl. pits; count hurts caused (no enemies)
   saf=pg.evaluate('''()=>{const D=__dc,G=D.G,res={};for(const k of ['stink','bubble','pogo']){let hurts=0,lowest=0,inv=0;for(let t=0;t<40;t++){G.littles=[];G.rangers=[];G.boulders=[];G.meteors=[];G.lava=[];G.ch=null;G.chT=99;G.hit=0;G.inv=0;
    const s=G.secs[G.secs.length-2]||G.secs[0];const p=s.pits[t%Math.max(1,s.pits.length)];const d=G.d;if(p){d.x=p.x-d.w-2+(t%3)*10;d.y=GY-d.h-80}d.vy=0;G.camX=Math.max(0,d.x-200);
-   D.sillyStart(k);G.sil.warn=1/60;const h=G.hearts+G.lives*10;for(let i=0;i<60*5;i++){G.littles=[];G.rangers=[];G.boulders=[];keys.arrowright=(t%2==0)&&!!(G.sil&&(G.sil.fx||G.sil.warn>0));update()}keys.arrowright=false;if(G.hearts+G.lives*10<h)hurts++;if(k=='bubble'&&G.inv>0)inv++;G.hearts=3;G.lives=3}res[k]=hurts}return res}''')
+   D.sillyStart(k);G.sil.warn=1/60;G.sil.hx=G.d.x;G.hit=0;const h=G.hearts+G.lives*10;for(let i=0;i<60*5;i++){G.littles=[];G.rangers=[];G.boulders=[];keys.arrowright=(t%2==0)&&!!(G.sil&&(G.sil.fx||G.sil.warn>0));update()}keys.arrowright=false;if(G.hearts+G.lives*10<h)hurts++;if(k=='bubble'&&G.inv>0)inv++;G.hearts=3;G.lives=3}res[k]=hurts}return res}''')
   check(all(v==0 for v in saf.values()),f'effects never hurt by themselves, even next to pits (40 tries each) {saf}')
   # Calm halves
-  pg.evaluate("VIS.setCalm(true)");dur=pg.evaluate("()=>{const G=__dc.G;G.sil.fx=null;__dc.sillyStart('pogo');G.sil.warn=1/60;__dc.sillyUpd(G.d);return G.sil.fx.T}")
+  pg.evaluate("VIS.setCalm(true)");dur=pg.evaluate("()=>{const G=__dc.G;G.sil.fx=null;__dc.sillyStart('pogo');G.sil.warn=1/60;__dc.G.sil.hx=__dc.G.d.x;__dc.G.hit=0;__dc.sillyUpd(G.d);return G.sil.fx.T}")
   check(abs(dur-1.0)<.01,f'Calm halves effect time (pogo 2 s -> {dur} s)');pg.evaluate("__dc.G.sil.fx.t=1");pg.wait_for_timeout(200);pg.screenshot(path=SHOTS+'/hard-calm-pogo.png');pg.evaluate("VIS.setCalm(false)")
   pg.click('#snd');check(pg.evaluate("localStorage.dinoColossus_Snd")=='0','mute still works');pg.click('#snd')
   check(not pg.errs,f'no console errors (hard + effects) {pg.errs}');cx.close()
@@ -145,11 +145,11 @@ try:
       pg.wait_for_timeout(700)
       if tag!='_892': pg.screenshot(path=SHOTS+f'/boss-approach-{d}{tag}.png')
       if d=='hard':
-        pg.dispatch_event('#br','pointerdown',{'pointerType':'touch'});pg.evaluate("__dc.sillyStart('bubble')");r=frames(pg,3000);pg.dispatch_event('#br','pointerup')
+        pg.dispatch_event('#br','pointerdown',{'pointerType':'touch'});pg.evaluate("__dc.sillyStart('bubble');__dc.G.sil.hx=__dc.G.d.x;__dc.G.hit=0");r=frames(pg,3000);pg.dispatch_event('#br','pointerup')
         perf[f'{w}x{h} dpr{dpr} hard+effect']=st(r)
         if tag=='_740':
-          pg.evaluate("__dc.sillyStart('bubble')");pg.wait_for_timeout(300);pg.screenshot(path=SHOTS+'/hard-warning_740.png');pg.wait_for_timeout(1300);pg.screenshot(path=SHOTS+'/hard-bubble_740.png');pg.wait_for_timeout(3000)
-          for k in ['stink','pogo']: pg.evaluate(f"__dc.sillyStart('{k}')");pg.wait_for_timeout(1500);pg.screenshot(path=SHOTS+f'/hard-{k}_740.png');pg.wait_for_timeout(2500)
+          pg.evaluate("__dc.sillyStart('bubble')");pg.wait_for_timeout(300);pg.screenshot(path=SHOTS+'/hard-warning_740.png');pg.evaluate("__dc.G.sil.hx=__dc.G.d.x;__dc.G.hit=0");pg.wait_for_timeout(1300);pg.screenshot(path=SHOTS+'/hard-bubble_740.png');pg.wait_for_timeout(3000)
+          for k in ['stink','pogo']: pg.evaluate(f"__dc.sillyStart('{k}');__dc.G.sil.hx=__dc.G.d.x;__dc.G.hit=0");pg.wait_for_timeout(1500);pg.screenshot(path=SHOTS+f'/hard-{k}_740.png');pg.wait_for_timeout(2500)
       pg.evaluate("__dc.G.running=false")
     check(pg.evaluate("document.getElementById('c').width")<=w*1.01+1 or dpr>1,f'{w}x{h} canvas ok')
     check(not pg.errs,f'{w}x{h} dpr{dpr}: no console errors {pg.errs}');cx.close()

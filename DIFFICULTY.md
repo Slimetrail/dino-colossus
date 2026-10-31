@@ -27,3 +27,8 @@ Curves (x = Dx, or D for bosses):
 | Pit chance | .233–.292 | .249–.313 | .286–.353 |
 
 Hard only: silly human every 20–35 s, 1.2 s warning, then stink (no run, 1.8 s), bubble (safe float, 2.6 s) or pogo (2.0 s). Never kills; falls during/after effect respawn without hurt. Calm halves durations, no shake/vibration.
+
+## v23 changes (Hard only; Easy and Medium unchanged)
+- Spear people: Hard multiplier 0.35 (v22) x 1.2 = 0.42. Per section 1/3/5: v14 base 3/8/12, v22 1/3/4, v23 1/3/5. Sections 1-10 total: v22 46, v23 55.
+- Rolling boulders: Hard boulder gap / 0.7 (30% fewer boulders per minute). Middle draw s1/s3/s5: v22 2.21/1.83/1.6 s -> v23 3.16/2.61/2.29 s. Falling meteor rocks (Meteor Shower challenge) are not rolling rocks and are unchanged.
+- Silly human: no longer runs into the dino's mouth. It appears on the ground ahead of the dino and walks away (1.1 px/frame, dino 3.5). Its trick happens only if you catch and eat it; if it leaves the screen or 14 s pass, it is gone with no trick.
