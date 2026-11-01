@@ -23,12 +23,14 @@ GROW='''(side)=>{const D=__dc,G=D.G;D.enterBonus();G.bonusT=999;G.belly=0;G.hit=
  for(let i=0;i<200;i++)update();const h0=G.hearts;G.belly=23;let bad=0,miny=999;for(let i=0;i<300;i++){keys[' ']=i%40<15;update();const d=G.d;miny=Math.min(miny,d.y);if(d.y+d.h>GY+1||d.x<X-.5||d.x+d.w>X+VW+.5||!G.inBonus)bad++}
  keys[k]=false;keys[' ']=false;return {bad,miny,hearts:G.hearts-h0}}'''
 PIT='''()=>{const D=__dc,G=D.G;let pit=null;for(const s of G.secs){for(const p of s.pits)if(p.x>G.d.x+200){pit=p;break}if(pit)break}if(!pit)return {nopit:1};
+ // v27: no walking enemies, rocks or shots during this check (one could knock the dino after the safe moment and make the test flaky)
+ const calm=()=>{for(const k of ['bigs','boulders','critters','rangers','littles','meteors','vols','toss','fly','waves','bshots'])if(Array.isArray(G[k]))G[k].length=0};calm();
  G.d.x=pit.x-40;G.d.y=GY-60;G.camX=Math.max(G.camX,G.d.x-VW*.4);G.hit=0;G.safeT=0;G.spawnT=0;G.needRel=0;G.belly=0;
- for(let i=0;i<30;i++)update();G.lastSafe={x:pit.x-G.d.w+2,y:G.d.y};  // last ground touched = the very edge
+ for(let i=0;i<30;i++)(calm(),update());G.lastSafe={x:pit.x-G.d.w+2,y:G.d.y};  // last ground touched = the very edge
  const h0=G.hearts,l0=G.lives;keys.arrowright=true;let falls=0,prevBelow=false,xs=[];G.d.x=pit.x+pit.w/2;G.d.y=GY+30;G.d.vy=2;
- let ph=G.hearts;for(let i=0;i<60*4;i++){update();if(G.hearts<ph)falls++;ph=G.hearts;if(i==1)xs.push(G.d.x);if(i==100)xs.push(G.d.x)}
+ let ph=G.hearts;for(let i=0;i<60*4;i++){(calm(),update());if(G.hearts<ph)falls++;ph=G.hearts;if(i==1)xs.push(G.d.x);if(i==100)xs.push(G.d.x)}
  const spot={x:G.d.x,clear:[-24,0,G.d.w/2,G.d.w,G.d.w+40].every(o=>__dc.G.solids&&(()=>{let t=null;for(const s of G.solids)if(s.k=='g'&&G.d.x+o>=s.x&&G.d.x+o<=s.x+s.w)t=1;return t})()),edge:pit.x-(G.d.x+G.d.w)};
- const heldX=G.d.x;keys.arrowright=false;for(let i=0;i<5;i++)update();keys.arrowright=true;for(let i=0;i<20;i++)update();const moved=G.d.x-heldX;keys.arrowright=false;
+ const heldX=G.d.x;keys.arrowright=false;for(let i=0;i<5;i++)(calm(),update());keys.arrowright=true;for(let i=0;i<20;i++)(calm(),update());const moved=G.d.x-heldX;keys.arrowright=false;
  return {hearts:h0-G.hearts,lives:l0-G.lives,falls,xs,spot,moved}}'''
 try:
  with sync_playwright() as p:
