@@ -13,8 +13,8 @@ def check(c,m):
     if c: passes+=1
     else: fails.append(m)
 sw=open(os.path.join(ROOT,'sw.js')).read();html=open(os.path.join(ROOT,'index.html')).read()
-check('const VER="24"' in sw and sw.count('?v=24')==4 and '?v=23' not in sw,'sw VER 24, SHELL ?v=24')
-check(html.count('?v=24')==5 and '>v24 · A Slimetrail production<' in html,'index.html ?v=24 and footer v24')
+check('const VER="25"' in sw and sw.count('?v=25')==4 and '?v=23' not in sw,'sw VER 24, SHELL ?v=25')
+check(html.count('?v=25')==5 and '>v25 · A Slimetrail production<' in html,'index.html ?v=25 and footer v24')
 check('pops up' not in html and 'walks away' in html,'How to play: silly human "walks away", no "pops up"')
 check(os.path.exists(os.path.join(ROOT,'CHANGES-v24.md')),'CHANGES-v24.md exists')
 code=' '.join(open(os.path.join(ROOT,f)).read().lower() for f in ['index.html','game.js','vis.js','sprites.js','sw.js','intro.js'])
@@ -76,7 +76,7 @@ try:
   cx3=b.new_context(viewport={'width':360,'height':640},device_scale_factor=2,has_touch=True,is_mobile=True);p3=cx3.new_page();p3.goto(URL+'?intro=0');p3.wait_for_timeout(400)
   vb=p3.evaluate("document.getElementById('ver').getBoundingClientRect().bottom");check(vb<=640,f'360x640: credit line inside the screen (bottom {vb})');cx3.close()
   cx3=b.new_context(viewport={'width':390,'height':844},device_scale_factor=2,has_touch=True,is_mobile=True);p3=cx3.new_page();p3.goto(URL+'?intro=0');p3.wait_for_timeout(400);p3.tap('#go');p3.wait_for_timeout(500)
-  src=open(os.path.join(ROOT,'game.js')).read();check('rs=portrait?8:' in src,'portrait: belly meter not pushed off by the top buttons (read in code)')
+  src=open(os.path.join(ROOT,'game.js')).read();check('rs0=portrait?8:' in src,'portrait: belly meter not pushed off by the top buttons (read in code)')
   cx3.close()
   # QA D6: title sound button can be tapped
   pg.goto(URL+'?intro=0');pg.wait_for_timeout(400)

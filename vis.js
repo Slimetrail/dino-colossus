@@ -2,7 +2,7 @@
 // v12 look + feel layer: parallax, sky, juice, boss aura, sparkles, dress-up, sound table, music.
 // All art is drawn in code. Runs on the game's fixed 60 steps/sec clock (same speed at 60/90/120 Hz).
 const VIS=(()=>{
-const LS=(()=>{try{const l=window.localStorage;l.setItem('__t','1');l.removeItem('__t');return l}catch(e){return {}}})(),TAU=Math.PI*2;
+const LS=(()=>{let l=null;try{l=window.localStorage;if(l)l.getItem('__t')}catch(e){l=null}const mem={};if(!l)return mem;return new Proxy(mem,{get(o,k){if(typeof k!=='string')return undefined;try{const v=l.getItem(k);if(v!=null)return v}catch(e){}return o[k]},set(o,k,v){o[k]=String(v);try{l.setItem(k,String(v))}catch(e){}return true},deleteProperty(o,k){delete o[k];try{l.removeItem(k)}catch(e){}return true}})})(),TAU=Math.PI*2;
 const rnd=(a,b)=>a+Math.random()*(b-a);
 let calm=LS.dinoColossus_Calm==='1',tapped=false;
 const MAXP=60; // particle cap for v12 effects
@@ -88,7 +88,7 @@ setInterval(musicTick,90);
 // v22: called by the intro's Tap to start. Arms the intro music to play ONCE from the start (stops any earlier copy first, so a re-launch never overlaps).
 function introMusic(){stopOne();introDone=false;try{musicTick()}catch(e){}}
 function unlock(){tapped=true;const a=A();if(a&&a.state!=='running')a.resume().catch(()=>{});prerender()}
-addEventListener('pointerdown',unlock,true);addEventListener('keydown',unlock,true);
+addEventListener('pointerup',unlock,true);addEventListener('keydown',unlock,true); // v25 (QA E1): sound unlocks on the first finger-UP, never on finger-down
 document.addEventListener('visibilitychange',()=>{if(document.hidden){stopMusic();const a=A();if(a&&a.state==='running')a.suspend().catch(()=>{})}else if(tapped){const a=A();if(a)a.resume().catch(()=>{});wake()}});
 function buzz(p){if(calm||!tapped||!navigator.vibrate)return;if(typeof snd!=='undefined'&&!snd)return;try{navigator.vibrate(p)}catch(e){}}
 // screen wake lock while a run is going

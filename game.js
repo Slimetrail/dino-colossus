@@ -27,7 +27,7 @@ function view(){const hud=44,ctrl=portrait?150:0;if(portrait){VH=420;WY=0;S=W/44
 const bossVW=()=>portrait?W/(W/448):W/(H/BVH);const AW=()=>G.arenaW||VW;
 layout();addEventListener('resize',layout);
 // ---- persistent ----
-const LS=(()=>{try{const l=window.localStorage;l.setItem('__t','1');l.removeItem('__t');return l}catch(e){return {}}})(); // v24 (QA D4): storage blocked -> in-memory, game still starts
+const LS=(()=>{let l=null;try{l=window.localStorage;if(l)l.getItem('__t')}catch(e){l=null}const mem={};if(!l)return mem;return new Proxy(mem,{get(o,k){if(typeof k!=='string')return undefined;try{const v=l.getItem(k);if(v!=null)return v}catch(e){}return o[k]},set(o,k,v){o[k]=String(v);try{l.setItem(k,String(v))}catch(e){}return true},deleteProperty(o,k){delete o[k];try{l.removeItem(k)}catch(e){}return true}})})(); // v25 (QA E2): probe with a READ so a full disk (setItem throws QuotaExceededError) still loads saves; only writes are wrapped; blocked -> in-memory
 const DIFFS={easy:'EASY',medium:'MEDIUM',hard:'HARD'};let diff=DIFFS[LS.dinoColossus_Diff]?LS.dinoColossus_Diff:'medium';
 // ---- v15 difficulty (see DIFFICULTY.md). Level keys easy/medium/hard and all saves are unchanged; only their meaning changed.
 // Base values = the v14 'hard' settings. D = 1 (easy), 2 (medium), 8 (hard). Ramp: within each 5-section stretch before a boss,
@@ -485,7 +485,7 @@ function champDraw(){const cv=$('champc');if($('champ').classList.contains('hide
  champRAF=requestAnimationFrame(champDraw)}
 $('champ').addEventListener('click',()=>{if(Date.now()-champT<900)return;$('champ').classList.add('hide');cancelAnimationFrame(champRAF);showEnd()});
 // ---- draw ----
-function belMeter(x,y){const c=cap(),w=Math.max(80,Math.min(160,VW/4-40)),h=12,by=y+18,st=G.inBonus?Math.min(1,stageOf(G.belly)):stageOf(G.belly),SC=['#8bc34a','#ffa726','#e040fb'];
+function belMeter(x,y){G.belBox=[x,y,Math.max(100,Math.max(80,Math.min(160,VW/4-40))),34];const c=cap(),w=Math.max(80,Math.min(160,VW/4-40)),h=12,by=y+18,st=G.inBonus?Math.min(1,stageOf(G.belly)):stageOf(G.belly),SC=['#8bc34a','#ffa726','#e040fb'];
  pxText('BELLY',x,y,14,'#fff');pxText(G.belly+'/'+c,x+56,y+1,12,G.belly>=c?'#ffea00':'#fff');
  const fx=k=>x+Math.round(w*Math.min(1,k/c));ctx.fillStyle='#000';ctx.fillRect(x-2,by-2,w+4,h+4);
  ctx.fillStyle='#2e3b23';ctx.fillRect(x,by,fx(FAT_AT)-x,h);ctx.fillStyle='#4a3417';ctx.fillRect(fx(FAT_AT),by,fx(ROLL_AT)-fx(FAT_AT),h);ctx.fillStyle='#3d1f45';ctx.fillRect(fx(ROLL_AT),by,x+w-fx(ROLL_AT),h);
@@ -583,7 +583,10 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ct
  {const vx=col+4,vy=hy+1;ctx.fillStyle='#000';ctx.fillRect(vx,vy+3,16,11);ctx.fillStyle='#8d6e63';ctx.fillRect(vx+1,vy+8,14,6);ctx.fillRect(vx+4,vy+4,8,4);ctx.fillStyle='#ff6d00';ctx.fillRect(vx+5,vy+2,6,3);ctx.fillStyle='#ffea00';ctx.fillRect(vx+7,vy,2,3)}pxText('x'+(G.thrown||0),col+24,hy,14,'#ffcc80');
  spr(SPR.gem,col+4,hy+16,2.2);pxText('x'+String(gems).padStart(2,'0'),col+24,hy+17,13,'#fff');
  pxText('LEVEL',col*2,hy,14,'#fff');pxText(DIFFS[G.diff||diff],col*2+52,hy+1,12,G.diff==='hard'?'#ff8a80':G.diff==='easy'?'#b2ff59':'#ffe082');pxText(G.inBonus?'BONUS':String(G.cur),col*2,hy+16,14,'#fff');pxText('BOSS '+bossesBeat()+'/'+NBOSS,col*2+(G.inBonus?60:36),hy+18,11,'#ffd54f');
- {const bw=Math.max(80,Math.min(160,VW/4-40)),mb=$('menub'),rs=portrait?8:mb&&mb.offsetParent!==null?(innerWidth-mb.getBoundingClientRect().left+6)/S:60;belMeter(Math.max(portrait?col*2+110:col*2+150,Math.min(col*3,VW-rs-Math.max(100,bw)-4)),hy)}
+ {const bw=Math.max(80,Math.min(160,VW/4-40)),mb=$('menub'),rs0=portrait?8:mb&&mb.getBoundingClientRect().width>0?(innerWidth-mb.getBoundingClientRect().left+6)/S:60,lo0=portrait?col*2+110:col*2+150,mw=Math.max(100,bw)+4;
+  // v25 (QA open item): on narrow landscape screens (640x360) the home/sound buttons covered the belly numbers. If the meter cannot fit left of them, the buttons move just below the HUD bar.
+  const low=G.running&&!portrait&&lo0>VW-rs0-mw;if(low!==btnLow){btnLow=low;const t=low?Math.round(62*S+4)+'px':'4px';$('menub').style.top=t;$('snd').style.top=t}const rs=btnLow?8:rs0;
+  belMeter(Math.max(lo0,Math.min(col*3,VW-rs-mw)),hy)}
  for(let i=0;i<Math.min(G.hearts,6);i++)spr(SPR.heart,14+i*17,hy+36,2);if(G.hearts>6)pxText('+'+(G.hearts-6),14+6*17,hy+34,12,'#fff');pxText('LIVES',col*2,hy+36,12,'#fff');for(let i=0;i<G.lives;i++){ctx.save();ctx.beginPath();ctx.rect(col*2+46+i*20,hy+30,18,18);ctx.clip();spr(SPR.dino[pick][0],col*2+46+i*20-12,hy+31,1.5,false);ctx.restore()}
  if(carn()){const s=curSec(G.d.x);spr(SPR.little[0][0],col+4,hy+37,1.3);pxText(s.ate+'/'+s.goal,col+24,hy+36,12,s.ate>=s.goal?'#b2ff59':'#fff')}
  const tc=(t,y,sz,c)=>{ctx.font='bold '+sz+'px "Courier New",monospace';const w=ctx.measureText(t).width;if(w>VW-16)sz=Math.floor(sz*(VW-16)/w);pxText(t,VW/2,y,sz,c,'center')};
@@ -594,13 +597,15 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ct
  if(G.secBanner){ctx.globalAlpha=Math.min(1,G.secBanner.l);tc(G.secBanner.t.toUpperCase(),ty,16,'#fff');ctx.globalAlpha=1}
  if(G.banner)tc(G.banner.t.replace(/[^\x20-\x7E]/g,'').trim().toUpperCase(),G.silBot?VH*.52:VH*.36,26,'#ffea00');
  VIS.hudFront();ctx.restore()}
-let acc=0,last=0;function loop(t){const dt=Math.min(100,t-last||16);last=t;acc+=dt;while(acc>=16.67){if(G.running)update();else if(G.parts)G.parts=G.parts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.l-=.01;return p.l>0});VIS.step();acc-=16.67}draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+let acc=0,last=0;function loop(t){if(btnLow&&!G.running){btnLow=false;$('menub').style.top=$('snd').style.top='4px'}const dt=Math.min(100,t-last||16);last=t;acc+=dt;while(acc>=16.67){if(G.running)update();else if(G.parts)G.parts=G.parts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.l-=.01;return p.l>0});VIS.step();acc-=16.67}draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
 // ---- v15 HARD-ONLY silly human (v23/v24: walks away for up to 8 s; eat it to get ONE random harmless effect). Never on easy/medium.
 // stink: can't run sideways (jump still works); bubble: floats + drifts, pops, safe drop; pogo: auto-bounces.
 // Calm halves effect time. G.silGrace: while an effect runs (+1.5 s), falling into a pit/lava just puts you back, no hurt.
 const SIL={gap:[20,35],gap0:120,warn:1.2,walk:8,wspd:1.1,dur:{stink:1.8,bubble:2.6,pogo:2},kinds:['stink','bubble','pogo'],
  say:{stink:'TOOT! NO RUNNING!',bubble:'BLOOP! BUBBLE RIDE!',pogo:'BOING! POGO!'},snd:{stink:'toot',bubble:'whoosh',pogo:'boing'}};
 function calmOn(){try{return LS.dinoColossus_Calm==='1'}catch(e){return false}}
+// v25 (QA E5): while the app is in the background or loses focus, the silly human's 8 s timer stops (it does not run out unseen).
+let silHold=false,btnLow=false;addEventListener('blur',()=>{silHold=true});addEventListener('focus',()=>{silHold=false});document.addEventListener('visibilitychange',()=>{silHold=document.hidden});
 function sillyBusy(){const b=G.boss;return G.inBonus||G.dying||!G.running||G.paused||G.banner||G.secBanner&&G.secBanner.l>1.8||(b&&!b.gone&&(b.tele||b.roar||G.bossHint&&G.bossHint.l>4))}
 function sillyStart(k){const s=G.sil;k=k||pickA(SIL.kinds.filter(q=>q!==s.last));s.last=k;s.k=k;s.seen=(s.seen||0)+1;s.warn=SIL.walk;sillyPlace();s.fx=null;s.eaten=0;VIS.play('warn')}
 // v24 (Skeptic: on Hard it could still appear next to the dino and get eaten with no input): it now appears SIL.gap0 px clear of the dino's
@@ -613,7 +618,7 @@ function sillyPlace(){const s=G.sil,d=G.d,L=G.camX+8,Rr=G.camX+VW-8,g=SIL.gap0,w
 // It appears on the ground ahead of the dino and walks away (1.1 px/frame, the dino runs 3.5); its trick only happens if the player catches and eats it.
 // If it walks off screen or SIL.walk seconds pass, it is gone with no trick. It still can never hurt the dino.
 function sillyHum(){const s=G.sil;if(!s||s.hx==null)return null;const gt=groundTop(s.hx+11);return {x:s.hx,y:(gt==null?GY:gt)-46,p:0,sc:1,w:22,h:46}}
-function sillyUpd(d){if(G.diff!=='hard'){G.sil=null;return}if(!G.sil)G.sil={next:R(SIL.gap[0],SIL.gap[1]),n:0};const s=G.sil;if(G.silGrace>0)G.silGrace--;
+function sillyUpd(d){if(G.diff!=='hard'){G.sil=null;return}if(!G.sil)G.sil={next:R(SIL.gap[0],SIL.gap[1]),n:0};const s=G.sil;if(silHold&&s.warn>0)return;if(G.silGrace>0)G.silGrace--;
  if(s.fx){s.fx.t-=1/60;if(s.fx.k=='stink'&&(G.el*60|0)%6==0)G.smoke.push({x:d.x+d.w/2+R(-14,14),y:d.y+R(0,d.h),vx:R(-.6,.6),vy:-.5,r:9,l:.6,g:1});
   if(s.fx.t<=0){const k=s.fx.k;s.fx=null;G.silGrace=90;if(k=='bubble'){VIS.play('pop');G.inv=Math.max(G.inv||0,90);poof(d.x+d.w/2,d.y+d.h/2,6);sillySafeX(d)}s.next=R(SIL.gap[0],SIL.gap[1])}return}
  if(s.warn>0){s.warn-=1/60;if(s.pdx!=null&&Math.abs(d.x-s.pdx)>20){const k=s.hx;sillyPlace();if(Math.abs(s.hx-k)<1)s.hx=k}s.pdx=d.x;s.hx+=s.side*SIL.wspd;s.hx=Math.max(G.camX+8,Math.min(G.camX+VW-30,s.hx));const hm=sillyHum(),gone=s.hx<G.camX-40||s.hx>G.camX+VW+40;if(hm&&!G.hit&&ov(d,hm)){s.warn=0;s.hx=null;s.caught=1}else if(!hm||gone||s.warn<=0){s.warn=0;s.hx=null;s.missed=(s.missed||0)+1;s.next=R(SIL.gap[0],SIL.gap[1]);return}else return;{const k=s.k,c=calmOn()?.5:1;s.eaten=1;G.silEaten=(G.silEaten||0)+1;poof(d.x+d.w/2,d.y+d.h*.3,5);msg('GULP! Silly human!',d.x,d.y-40,'#ffeb3b');VIS.play('pop');s.fx={k,t:SIL.dur[k]*c,T:SIL.dur[k]*c,ph:0};s.n++;G.silGrace=Math.round(SIL.dur[k]*c*60)+90;VIS.play(SIL.snd[k]);if(k=='bubble'){d.vy=-2;sillySafeX(d)}if(!calmOn()){G.shake=Math.max(G.shake||0,4);VIS.buzz(25)}}return}
@@ -645,4 +650,4 @@ function sillyFx(s,d,cx,cy){
  const f=s.fx;if(!f)return;const ic2={stink:'💨',bubble:'🫧',pogo:'🦘'}[f.k];silBanner(ic2+' '+SIL.say[f.k]+' '+ic2,'#2e7d32','#fff',1,.75);if(f.k=='stink'){ctx.save();for(let i=0;i<5;i++){const a=G.el*2+i*1.25;ctx.globalAlpha=.45;ctx.fillStyle=i%2?'#9ccc65':'#7cb342';ctx.beginPath();ctx.arc(cx+Math.cos(a)*20,cy+Math.sin(a)*12,11,0,6.283);ctx.fill()}ctx.restore()}
  else if(f.k=='bubble'){ctx.save();const r=Math.max(d.w,d.h)*.8+Math.sin(G.el*6)*2;ctx.globalAlpha=.35;ctx.fillStyle='#b3e5fc';ctx.beginPath();ctx.arc(cx,cy,r,0,6.283);ctx.fill();ctx.globalAlpha=.9;ctx.strokeStyle='#e1f5fe';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx-r*.4,cy-r*.45,4,0,6.283);ctx.fill();ctx.restore()}
  else if(f.k=='pogo'){ctx.save();ctx.strokeStyle='#ff7043';ctx.lineWidth=3;ctx.beginPath();const by=d.y+d.h;for(let i=0;i<5;i++){ctx.lineTo(cx+(i%2?-6:6),by+i*3)}ctx.stroke();ctx.restore()}}
-window.__dc={rangerN,RANGER_MUL,BOULDER_MUL,sillyHum,DMUL,Dx,Dbase,DK,rampP,thrCfg,SIL,sillyStart,sillyUpd,BIG_SPD,BIG_CHANCE,poof,msg,useAtk,ITEMS,THROW,hurt,say,loadTop,insertTop,qualifies,topBest,showEnd,readLines,pickVoice,stageOf,STAGES:{FAT_AT,ROLL_AT,FAT_SPD,FAT_JMP,ROLL_JMP,ROLL_MAX,ROLL_ACC,ROLL_FRIC,ROLL_CAP},get G(){return G},get CHALLENGES(){return CHALLENGES},CRIT,get diff(){return diff},get ORDER(){return ORDER},loseLife,respawn,safeSpot,enterBonus,exitBonus,askCont,contYes,contNo,mystery,breakBrick,BOSSES,NBOSS,ARCH,bossHP,bossSpd,saveRun,loadRun,clearRun,champion,bossesBeat,GOOD,BAD,start,startChallenge,startBoss,enterBonus,exitBonus,UNL,usePower,erupt,cap,edgeIn,genSection,groundTop,get unl(){return unl},get pick(){return pick},consts:{T,GY,JV,GRAV,SPD,SEC_L},secLen,get view(){return {S,VW,VH,WY,OY,ZK,AW:AW()}}};
+window.__dc={get silHold(){return silHold},rangerN,RANGER_MUL,BOULDER_MUL,sillyHum,DMUL,Dx,Dbase,DK,rampP,thrCfg,SIL,sillyStart,sillyUpd,BIG_SPD,BIG_CHANCE,poof,msg,useAtk,ITEMS,THROW,hurt,say,loadTop,insertTop,qualifies,topBest,showEnd,readLines,pickVoice,stageOf,STAGES:{FAT_AT,ROLL_AT,FAT_SPD,FAT_JMP,ROLL_JMP,ROLL_MAX,ROLL_ACC,ROLL_FRIC,ROLL_CAP},get G(){return G},get CHALLENGES(){return CHALLENGES},CRIT,get diff(){return diff},get ORDER(){return ORDER},loseLife,respawn,safeSpot,enterBonus,exitBonus,askCont,contYes,contNo,mystery,breakBrick,BOSSES,NBOSS,ARCH,bossHP,bossSpd,saveRun,loadRun,clearRun,champion,bossesBeat,GOOD,BAD,start,startChallenge,startBoss,enterBonus,exitBonus,UNL,usePower,erupt,cap,edgeIn,genSection,groundTop,get unl(){return unl},get pick(){return pick},consts:{T,GY,JV,GRAV,SPD,SEC_L},secLen,get view(){return {S,VW,VH,WY,OY,ZK,AW:AW()}}};

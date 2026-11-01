@@ -1,0 +1,11 @@
+UNVERIFIED - sound effect licences (Dino Colossus v25)
+
+Files: sounds/stomp.mp3, sounds/land.mp3, sounds/chime.mp3, sounds/cheer.mp3, sounds/sparkle.mp3 (said to be Kenney, kenney.nl, CC0)
+       sounds/roar.mp3 (said to be "Retro Monster Roar", OpenGameArt)
+
+What is known:
+- v13 (commit 1ba70e2, 2026-10-26) added these files and recorded them only as "CC0 Kenney + SdiviHall". No source page, pack name or original file name was saved.
+- The OpenGameArt page https://opengameart.org/content/retro-monster-roar (read 2026-11-01) lists author greg300, licence CC0, original file "Skeleton Roar.mp3" (24.7 KB). Our roar.mp3 is 6,312 bytes, so it is trimmed or re-encoded if it came from there. That it came from there is NOT proven.
+- Kenney publishes its game assets as CC0, but which Kenney pack these five files came from is not recorded, so this is NOT checked per file.
+
+Nothing here is guessed licence text. If these cannot be traced, the safe fix is to replace them with own-made effects (the game already has a generated fallback for each sound in vis.js).

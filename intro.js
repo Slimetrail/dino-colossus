@@ -254,7 +254,7 @@ function gateTap(e){if(!gateEl||gateEl.style.display==='none')return;if(e){e.pre
 function gate(why){if(off)return false;gateWhy=why;if(!gateEl){gateEl=document.createElement('div');gateEl.id='introTap';gateEl.setAttribute('role','button');gateEl.setAttribute('aria-label','Tap to start');
   gateEl.style.cssText='position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 70%,#3a1608 0%,#120804 55%,#050302 100%);touch-action:none;cursor:pointer;user-select:none;-webkit-user-select:none';
   gateEl.innerHTML='<div style="color:#fff;font:900 40px system-ui,sans-serif;text-shadow:0 4px 0 #5a1d00,0 0 24px rgba(255,120,30,.55);animation:introTapP 1.2s infinite alternate">Tap to start</div><style>@keyframes introTapP{from{transform:scale(1);opacity:.85}to{transform:scale(1.07);opacity:1}}</style>';
-  gateEl.addEventListener('pointerdown',gateTap);document.body.appendChild(gateEl)}
+  gateEl.addEventListener('pointerup',gateTap);gateEl.addEventListener('pointerdown',e=>{e.preventDefault()});document.body.appendChild(gateEl)}
  if(playing){cancelAnimationFrame(raf);playing=false;if(cv){cv.style.display='none';cv.style.pointerEvents='none'}}
  gates++;gateEl.style.display='flex';return true}
 addEventListener('keydown',e=>{if(gateEl&&gateEl.style.display!=='none'){gateTap(e)}},true);

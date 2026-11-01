@@ -12,8 +12,8 @@ def check(c,m):
     if c: passes+=1
     else: fails.append(m)
 sw=open(os.path.join(ROOT,'sw.js')).read();html=open(os.path.join(ROOT,'index.html')).read()
-check('const VER="24"' in sw and sw.count('?v=24')==4 and '?v=23' not in sw,'sw VER 23, cache dinocol-v24, SHELL ?v=24')
-check(html.count('?v=24')==5 and '>v24 · A Slimetrail production<' in html,'index.html ?v=24 and footer "v24 · A Slimetrail production"')
+check('const VER="25"' in sw and sw.count('?v=25')==4 and '?v=23' not in sw,'sw VER 23, cache dinocol-v25, SHELL ?v=25')
+check(html.count('?v=25')==5 and '>v25 · A Slimetrail production<' in html,'index.html ?v=25 and footer "v24 · A Slimetrail production"')
 check(os.path.exists(os.path.join(ROOT,'CHANGES-v23.md')),'CHANGES-v23.md exists')
 code=' '.join(open(os.path.join(ROOT,f)).read().lower() for f in ['index.html','game.js','vis.js','sprites.js','sw.js','intro.js'])
 for w in ['adsense','admob','doubleclick','applovin','unityads','gtag','analytics','fbq','utm_','affiliate','adsbygoogle']: check(w not in code,f'ad scan: no {w}')

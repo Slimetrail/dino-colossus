@@ -15,9 +15,9 @@ def check(c,m):
     if c: passes+=1
     else: fails.append(m)
 sw=open(os.path.join(ROOT,'sw.js')).read();html=open(os.path.join(ROOT,'index.html')).read();VER=re.search(r'VER="(\d+)"',sw).group(1)
-check(VER=='24' and sw.count('?v=24')==4 and '?v=22' not in sw,'sw VER 23 and SHELL ?v=24')
-check(html.count('?v=24')==5 and '?v=22' not in html,'index.html ?v=24 everywhere')
-check('>v24 · A Slimetrail production<' in html,'title footer reads "v24 · A Slimetrail production"')
+check(VER=='25' and sw.count('?v=25')==4 and '?v=22' not in sw,'sw VER 23 and SHELL ?v=25')
+check(html.count('?v=25')==5 and '?v=22' not in html,'index.html ?v=25 everywhere')
+check('>v25 · A Slimetrail production<' in html,'title footer reads "v24 · A Slimetrail production"')
 check('SlimeTrail' not in html and 'Designed and created' not in html and 'sound effects by' not in html.lower(),'no old credit wording or second credit line in index.html')
 cr=open(os.path.join(ROOT,'CREDITS.md')).read();check(CREDIT in cr and 'SlimeTrail' not in cr,'CREDITS.md uses the one credit wording')
 check(os.path.exists(os.path.join(ROOT,'CHANGES-v22.md')),'CHANGES-v22.md exists')
@@ -95,20 +95,20 @@ try:
   cx=b.new_context(viewport={'width':915,'height':412});pg=pg_(cx);pg.goto(URL);pg.wait_for_selector('#introTap');pg.keyboard.press('Enter');pg.wait_for_timeout(300)
   check(pg.evaluate('INTRO.playing') and pg.evaluate('INTRO.runs')==1,'a key press also starts the intro (and does not skip it)');cx.close()
   # 9 credit on screen
-  cx=mob(b);pg=pg_(cx);pg.goto(URL+'?intro=0');ver=pg.inner_text('#ver');check(ver.strip()=='v24 · A Slimetrail production' and pg.is_visible('#ver'),f'title footer shows exactly {ver!r}');cx.close()
+  cx=mob(b);pg=pg_(cx);pg.goto(URL+'?intro=0');ver=pg.inner_text('#ver');check(ver.strip()=='v25 · A Slimetrail production' and pg.is_visible('#ver'),f'title footer shows exactly {ver!r}');cx.close()
   # 10 update button: never on first install, appears once after a new version takes over, tap reloads
   cx=b.new_context(viewport={'width':844,'height':390});pg=pg_(cx);pg.goto(URL2+'?intro=0')
   pg.wait_for_function("navigator.serviceWorker.controller!==null",timeout=15000);pg.wait_for_timeout(1500)
   check(not pg.is_visible('#updb') and pg.evaluate('DINO_UPD.shown')==0,'first install (no previous controller): no update button')
   pg.reload();pg.wait_for_function("navigator.serviceWorker.controller!==null",timeout=15000);pg.evaluate("dispatchEvent(new Event('focus'))");pg.wait_for_timeout(1500)
   check(not pg.is_visible('#updb'),'same version re-check: no update button')
-  s2=open(os.path.join(APP,'sw.js')).read().replace('const VER="24"','const VER="24.9"');open(os.path.join(APP,'sw.js'),'w').write(s2)
+  s2=open(os.path.join(APP,'sw.js')).read().replace('const VER="25"','const VER="25.9"');open(os.path.join(APP,'sw.js'),'w').write(s2)
   for _ in range(12):
     pg.evaluate("dispatchEvent(new Event('focus'))")
     try: pg.wait_for_selector('#updb',state='visible',timeout=2500);break
     except Exception: pass
   pg.wait_for_selector('#updb',state='visible',timeout=3000)
-  keys=pg.evaluate("caches.keys()");check('dinocol-v24.9' in keys,f'button only after the new version is fully cached {keys}')
+  keys=pg.evaluate("caches.keys()");check('dinocol-v25.9' in keys,f'button only after the new version is fully cached {keys}')
   pg.evaluate("document.dispatchEvent(new Event('visibilitychange'))");pg.wait_for_timeout(1500)
   check(pg.evaluate('DINO_UPD.shown')==1,'update button appears once')
   bb=pg.locator('#updb').bounding_box();check(bb and bb['height']>=44 and bb['x']<40 and bb['y']+bb['height']>=380,f'button is small, bottom-left, tappable {bb}')
@@ -119,7 +119,7 @@ try:
   # 11 update during a run waits until the run is over
   cx=b.new_context(viewport={'width':844,'height':390});pg=pg_(cx);pg.goto(URL2+'?intro=0');pg.wait_for_function("navigator.serviceWorker.controller!==null",timeout=15000)
   pg.wait_for_timeout(800);pg.click('#go');pg.wait_for_timeout(600)
-  s2=open(os.path.join(APP,'sw.js')).read().replace('const VER="24.9"','const VER="24.8"');open(os.path.join(APP,'sw.js'),'w').write(s2)
+  s2=open(os.path.join(APP,'sw.js')).read().replace('const VER="25.9"','const VER="25.8"');open(os.path.join(APP,'sw.js'),'w').write(s2)
   for _ in range(12):
     pg.evaluate("dispatchEvent(new Event('focus'))")
     try: pg.wait_for_function('DINO_UPD.ready',timeout=2500);break
