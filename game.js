@@ -582,16 +582,20 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ct
  if(dk>0){ctx.fillStyle='rgba(10,10,60,'+dk*.6+')';ctx.fillRect(0,0,VW,VH)}
  if(G.flash){ctx.fillStyle='rgba(255,240,200,'+VIS.flashA(G.flash)+')';ctx.fillRect(0,0,VW,VH)}
  // retro HUD
+ // v27 (QA): small portrait phones (320 px wide) get a 12% bigger HUD; lives show as one icon plus a number there, so nothing touches the HUNGRY bar.
+ const hk=portrait&&W<380?1.12:1,VW0=VW;if(hk!==1){ctx.save();ctx.scale(hk,hk);VW=VW0/hk}const lvC=hk!==1,lx=lvC?VW/2-10:VW/2;
  VIS.hudBack(); const hy=10,col=VW/4;pxText('DINO',14,hy,14,'#fff');pxText(String(G.score).padStart(6,'0'),14,hy+16,17,'#fff59d');
  {const vx=col+4,vy=hy+1;ctx.fillStyle='#000';ctx.fillRect(vx,vy+3,16,11);ctx.fillStyle='#8d6e63';ctx.fillRect(vx+1,vy+8,14,6);ctx.fillRect(vx+4,vy+4,8,4);ctx.fillStyle='#ff6d00';ctx.fillRect(vx+5,vy+2,6,3);ctx.fillStyle='#ffea00';ctx.fillRect(vx+7,vy,2,3)}pxText('x'+(G.thrown||0),col+24,hy,14,'#ffcc80');
  spr(SPR.gem,col+4,hy+16,2.2);pxText('x'+String(gems).padStart(2,'0'),col+24,hy+17,13,'#fff');
- pxText('LEVEL',col*2,hy,14,'#fff');pxText(DIFFS[G.diff||diff],col*2+52,hy+1,12,G.diff==='hard'?'#ff8a80':G.diff==='easy'?'#b2ff59':'#ffe082');pxText(G.inBonus?'BONUS':String(G.cur),col*2,hy+16,14,'#fff');pxText('BOSS '+bossesBeat()+'/'+NBOSS,col*2+(G.inBonus?60:36),hy+18,11,'#ffd54f');
- {const bw=Math.max(80,Math.min(160,VW/4-40)),mb=$('menub'),rs0=portrait?8:mb&&mb.getBoundingClientRect().width>0?(innerWidth-mb.getBoundingClientRect().left+6)/S:60,lo0=portrait?col*2+110:col*2+150,mw=Math.max(100,bw)+4;
+ pxText('LEVEL',lx,hy,14,'#fff');pxText(DIFFS[G.diff||diff],lx+52,hy+1,12,G.diff==='hard'?'#ff8a80':G.diff==='easy'?'#b2ff59':'#ffe082');pxText(G.inBonus?'BONUS':String(G.cur),lx,hy+16,14,'#fff');pxText('BOSS '+bossesBeat()+'/'+NBOSS,lx+(G.inBonus?60:36),hy+18,11,'#ffd54f');
+ {const bw=Math.max(80,Math.min(160,VW/4-40)),mb=$('menub'),rs0=portrait?8:mb&&mb.getBoundingClientRect().width>0?(innerWidth-mb.getBoundingClientRect().left+6)/S:60,lo0=lvC?col*2+94:portrait?col*2+110:col*2+150,mw=Math.max(100,bw)+4;
   // v25 (QA open item): on narrow landscape screens (640x360) the home/sound buttons covered the belly numbers. If the meter cannot fit left of them, the buttons move just below the HUD bar.
   const low=(G.running||G.paused)&&!portrait&&lo0>VW-rs0-mw;if(low!==btnLow){btnLow=low;const t=low?Math.round(62*S+4)+'px':'4px';$('menub').style.top=t;$('snd').style.top=t}const rs=btnLow?8:rs0;
   belMeter(Math.max(lo0,Math.min(col*3,VW-rs-mw)),hy)}
- for(let i=0;i<Math.min(G.hearts,6);i++)spr(SPR.heart,14+i*17,hy+36,2);if(G.hearts>6)pxText('+'+(G.hearts-6),14+6*17,hy+34,12,'#fff');pxText('LIVES',col*2,hy+36,12,'#fff');for(let i=0;i<G.lives;i++){ctx.save();ctx.beginPath();ctx.rect(col*2+46+i*20,hy+30,18,18);ctx.clip();spr(SPR.dino[pick][0],col*2+46+i*20-12,hy+31,1.5,false);ctx.restore()}
+ for(let i=0;i<Math.min(G.hearts,6);i++)spr(SPR.heart,14+i*17,hy+36,2);if(G.hearts>6)pxText('+'+(G.hearts-6),14+6*17,hy+34,12,'#fff');pxText('LIVES',lx,hy+36,12,'#fff');for(let i=0;i<(lvC?Math.min(1,G.lives):G.lives);i++){ctx.save();ctx.beginPath();ctx.rect(lx+46+i*20,hy+30,18,18);ctx.clip();spr(SPR.dino[pick][0],lx+46+i*20-12,hy+31,1.5,false);ctx.restore()}
+ if(lvC&&G.lives>0)pxText('x'+G.lives,lx+66,hy+36,12,'#fff');
  if(carn()){const s=curSec(G.d.x);spr(SPR.little[0][0],col+4,hy+37,1.3);pxText(s.ate+'/'+s.goal,col+24,hy+36,12,s.ate>=s.goal?'#b2ff59':'#fff')}
+ if(hk!==1){ctx.restore();VW=VW0}
  const tc=(t,y,sz,c)=>{ctx.font='bold '+sz+'px "Courier New",monospace';const w=ctx.measureText(t).width;if(w>VW-16)sz=Math.floor(sz*(VW-16)/w);pxText(t,VW/2,y,sz,c,'center')};
  let ty=92;if(b&&!b.gone){const bw=VW*.6,bx=VW*.2,seg=(bw-4)/b.max;tc('BOSS '+(b.n||1)+'/'+NBOSS+' · '+b.T.short,ty,14,'#fff');ty+=17;VIS.bossBar(b,ty);ty+=28;
   if(G.bossHint){const k=Math.min(1,G.bossHint.l);ctx.globalAlpha=k;if(G.bossHint.n)tc(G.bossHint.n,VH*.5-40,34,'#fff');tc(G.bossHint.t,VH*.5+Math.sin(G.el*6)*4,28,'#ffea00');tc('Touch a weapon, then tap ATTACK. Jumping on its head works too!',VH*.5+36,13,'#fff');ctx.globalAlpha=1}}
