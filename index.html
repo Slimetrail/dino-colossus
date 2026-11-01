@@ -61,11 +61,14 @@ table.top tbody tr:nth-child(even){background:#ffffff12}table.top tr.new{backgro
 .cb{border:3px solid #fff!important;box-shadow:0 5px #0008,inset 0 -6px 0 #0003,inset 0 5px 0 #fff4!important;text-shadow:0 2px #0008;opacity:.95}
 #bl,#br{background:linear-gradient(#607d8b,#37474f)!important}#bj{background:linear-gradient(#ffb74d,#f57c00)!important;border-color:var(--acc,#fff)!important}
 #snd,#menub{min-width:44px;min-height:44px;border:2px solid #fff8!important}
+#quitYes,#quitNo{min-height:48px!important;min-width:48px;box-sizing:border-box}
 /* v25 (QA E3): every start-screen button is at least 44 px tall and wide */
 #start button{min-height:44px;min-width:44px;box-sizing:border-box}
 @media (orientation:landscape) and (max-height:460px){#srow{gap:4px}#srow .sm{margin-top:2px}#start .big{margin-top:3px}#start p{margin:1px 0}#ver{margin:1px 0 0!important}}
 @media (orientation:landscape) and (max-height:380px){#slogo{font-size:22px!important}#start h1{font-size:26px}}
 @media (orientation:portrait) and (max-height:680px){#srow{gap:4px}#srow .sm{margin-top:3px}#start .big{margin-top:6px}#start p{margin:3px 0}#start h1{margin:0}#dinos button{margin:2px}}
+/* v26 (QA): 320x568 small phones: everything on the start screen fits without scrolling */
+@media (orientation:portrait) and (max-height:600px){#start{padding-top:4px;padding-bottom:4px}#slogo{font-size:28px!important;line-height:1}#start h1{font-size:26px;margin:0}#start p{margin:1px 0;font-size:12px;line-height:1.2}#start .big{padding:6px 22px;font-size:18px;margin-top:3px}#start .sm{margin-top:2px;padding:4px 12px}#srow{gap:3px}#dinos button{margin:1px;padding:1px 3px}#dinos img{width:30px;height:30px}#ver{margin:1px 0 0!important}}
 #srow{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:360px}#srow .sm{margin-top:6px}
 #dressb{background:#e91e63!important;box-shadow:0 4px #880e4f}#calmb[aria-pressed=true]{background:#3949ab!important}
 #dress{background:linear-gradient(#7e57c2,#4527a0);flex-direction:row;gap:16px}#dL,#dR{display:flex;flex-direction:column;align-items:center}
@@ -87,7 +90,7 @@ table.top tbody tr:nth-child(even){background:#ffffff12}table.top tr.new{backgro
 @media (orientation:portrait) and (max-height:680px){#slogo{font-size:40px!important}} /* v24 (QA D5): credit line fits at 360x640 */
 </style></head><body>
 <div id="sap"></div><canvas id="c"></canvas>
-<button id="snd" style="position:fixed;top:4px;right:4px;z-index:6;font-size:18px;background:#0008;border:0;border-radius:6px;padding:3px 6px;color:#fff">🔊</button><button id="menub" type="button" aria-label="menu" style="position:fixed;top:4px;right:46px;z-index:3;font-size:18px;background:#0008;border:0;border-radius:6px;padding:3px 6px;color:#fff">🏠</button><div id="hud"><span>⭐<b id="score">0</b></span><span id="hearts"></span><span id="belly"></span><span id="goal"></span><span>💎<b id="gems">0</b></span><span>🗺️<b id="sec">1</b></span></div>
+<button id="snd" style="position:fixed;top:4px;right:4px;z-index:6;font-size:18px;background:#0008;border:0;border-radius:6px;padding:3px 6px;color:#fff">🔊</button><button id="menub" type="button" aria-label="menu" style="position:fixed;top:4px;right:52px;z-index:3;font-size:18px;background:#0008;border:0;border-radius:6px;padding:3px 6px;color:#fff">🏠</button><div id="hud"><span>⭐<b id="score">0</b></span><span id="hearts"></span><span id="belly"></span><span id="goal"></span><span>💎<b id="gems">0</b></span><span>🗺️<b id="sec">1</b></span></div>
 <button class="cb" id="bl">◀</button><button class="cb" id="br">▶</button><button class="cb" id="bj">JUMP</button><button class="cb hide" id="bp"></button><button class="cb hide" id="ba" type="button"></button><button id="bs" class="hide">swap power</button>
 <div id="start" class="ov"><div id="sL"><div id="slogo" style="font-size:54px">🦖🌋</div><h1>Dino Colossus</h1></div><div id="sR">
 <p id="lastrun" class="hide" style="background:#0004;border-radius:10px;padding:4px 10px"></p><p id="starth">Pick your dino:</p><div id="dinos"></div><div id="dname" style="font-size:14px;margin-top:4px"></div>

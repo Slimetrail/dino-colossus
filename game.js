@@ -597,7 +597,7 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ct
  if(G.secBanner){ctx.globalAlpha=Math.min(1,G.secBanner.l);tc(G.secBanner.t.toUpperCase(),ty,16,'#fff');ctx.globalAlpha=1}
  if(G.banner)tc(G.banner.t.replace(/[^\x20-\x7E]/g,'').trim().toUpperCase(),G.silBot?VH*.52:VH*.36,26,'#ffea00');
  VIS.hudFront();ctx.restore()}
-let acc=0,last=0;function loop(t){if(btnLow&&!G.running){btnLow=false;$('menub').style.top=$('snd').style.top='4px'}const dt=Math.min(100,t-last||16);last=t;acc+=dt;while(acc>=16.67){if(G.running)update();else if(G.parts)G.parts=G.parts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.l-=.01;return p.l>0});VIS.step();acc-=16.67}draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+let acc=0,last=0;function loop(t){if(btnLow&&!G.running){btnLow=false;$('menub').style.top=$('snd').style.top='4px'}const dt=Math.min(100,t-last||16);last=t;acc+=dt;if(silHold)acc=0;while(acc>=16.67){if(G.running&&!silHold)update();else if(G.parts)G.parts=G.parts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.l-=.01;return p.l>0});VIS.step();acc-=16.67}draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
 // ---- v15 HARD-ONLY silly human (v23/v24: walks away for up to 8 s; eat it to get ONE random harmless effect). Never on easy/medium.
 // stink: can't run sideways (jump still works); bubble: floats + drifts, pops, safe drop; pogo: auto-bounces.
 // Calm halves effect time. G.silGrace: while an effect runs (+1.5 s), falling into a pit/lava just puts you back, no hurt.
@@ -605,6 +605,7 @@ const SIL={gap:[20,35],gap0:120,warn:1.2,walk:8,wspd:1.1,dur:{stink:1.8,bubble:2
  say:{stink:'TOOT! NO RUNNING!',bubble:'BLOOP! BUBBLE RIDE!',pogo:'BOING! POGO!'},snd:{stink:'toot',bubble:'whoosh',pogo:'boing'}};
 function calmOn(){try{return LS.dinoColossus_Calm==='1'}catch(e){return false}}
 // v25 (QA E5): while the app is in the background or loses focus, the silly human's 8 s timer stops (it does not run out unseen).
+// v26 (QA E5): the whole game now stops while away (game clock, creatures, boulders, timers); the main loop skips update() while silHold is on.
 let silHold=false,btnLow=false;addEventListener('blur',()=>{silHold=true});addEventListener('focus',()=>{silHold=false});document.addEventListener('visibilitychange',()=>{silHold=document.hidden});
 function sillyBusy(){const b=G.boss;return G.inBonus||G.dying||!G.running||G.paused||G.banner||G.secBanner&&G.secBanner.l>1.8||(b&&!b.gone&&(b.tele||b.roar||G.bossHint&&G.bossHint.l>4))}
 function sillyStart(k){const s=G.sil;k=k||pickA(SIL.kinds.filter(q=>q!==s.last));s.last=k;s.k=k;s.seen=(s.seen||0)+1;s.warn=SIL.walk;sillyPlace();s.fx=null;s.eaten=0;VIS.play('warn')}
