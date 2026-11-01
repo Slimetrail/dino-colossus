@@ -66,7 +66,7 @@ let oSrc=null,introDone=false,fanPend=false;
 function stopOne(f){if(oSrc){const s=oSrc;oSrc=null;try{const a=A();if(f&&a){const t=a.currentTime;s.g.gain.cancelScheduledValues(t);s.g.gain.setValueAtTime(s.g.gain.value,t);s.g.gain.linearRampToValueAtTime(0,t+f);s.stop(t+f+.02)}else s.stop()}catch(e){}}}
 function playOne(k){const a=A();if(!a||!BUF[k])return;stopOne();out();const g=a.createGain(),s=a.createBufferSource();s.buffer=BUF[k];s.loop=false;s.k=k;s.g=g;g.gain.value=1;s.connect(g).connect(musicG);s.onended=()=>{if(oSrc===s)oSrc=null};s.start(a.currentTime+.01);oSrc=s}
 function titleUp(){const e=document.getElementById('start');return !!e&&!e.classList.contains('hide')}
-function musicTick(){const a=A();if(!a)return;const on_=(typeof snd==='undefined'||snd)&&!document.hidden&&tapped;
+function musicTick(){const a=A();if(!a)return;const on_=(typeof snd==='undefined'||snd)&&!vAway()&&tapped;
  if(!on_){stopOne();stopMusic();return}
  if(!st.running){fanPend=false;if(oSrc&&oSrc.k==='fanfare')stopOne(.3);
   if(titleUp()){if(!introDone&&BUF.intro&&!oSrc){introDone=true;playOne('intro')}}else if(oSrc&&oSrc.k==='intro')stopOne(.3)}
@@ -89,7 +89,11 @@ setInterval(musicTick,90);
 function introMusic(){stopOne();introDone=false;try{musicTick()}catch(e){}}
 function unlock(){tapped=true;const a=A();if(a&&a.state!=='running')a.resume().catch(()=>{});prerender()}
 addEventListener('pointerup',unlock,true);addEventListener('keydown',unlock,true); // v25 (QA E1): sound unlocks on the first finger-UP, never on finger-down
-document.addEventListener('visibilitychange',()=>{if(document.hidden){stopMusic();const a=A();if(a&&a.state==='running')a.suspend().catch(()=>{})}else if(tapped){const a=A();if(a)a.resume().catch(()=>{});wake()}});
+// v27 (QA/Skeptic): music and sound also pause when the app only loses focus (blur), not just when it is hidden.
+function vAway(){return document.hidden||(typeof blurHold!=='undefined'&&blurHold)}
+function audioAway(){if(vAway()){stopOne();stopMusic();const a=A();if(a&&a.state==='running')a.suspend().catch(()=>{})}else if(tapped){const a=A();if(a)a.resume().catch(()=>{});wake()}}
+const audioSync=()=>setTimeout(audioAway,0);
+document.addEventListener('visibilitychange',audioSync);addEventListener('blur',audioSync);addEventListener('focus',audioSync);addEventListener('pointerup',audioSync,true);
 function buzz(p){if(calm||!tapped||!navigator.vibrate)return;if(typeof snd!=='undefined'&&!snd)return;try{navigator.vibrate(p)}catch(e){}}
 // screen wake lock while a run is going
 let wl=null;async function wake(){try{if(st.running&&navigator.wakeLock&&!wl&&!document.hidden){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>wl=null)}}catch(e){wl=null}}
