@@ -582,8 +582,8 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ct
  if(dk>0){ctx.fillStyle='rgba(10,10,60,'+dk*.6+')';ctx.fillRect(0,0,VW,VH)}
  if(G.flash){ctx.fillStyle='rgba(255,240,200,'+VIS.flashA(G.flash)+')';ctx.fillRect(0,0,VW,VH)}
  // retro HUD
- // v27 (QA): small portrait phones (320 px wide) get a 12% bigger HUD; lives show as one icon plus a number there, so nothing touches the HUNGRY bar.
- const hk=portrait&&W<380?1.12:1,VW0=VW;if(hk!==1){ctx.save();ctx.scale(hk,hk);VW=VW0/hk}const lvC=hk!==1,lx=lvC?VW/2-10:VW/2;
+ // v27 (QA): small portrait phones (under 380 px wide) get a 12% bigger HUD; in portrait the lives show as one icon plus a number, so nothing touches the HUNGRY bar.
+ const hk=portrait&&W<380?1.12:1,VW0=VW;if(hk!==1){ctx.save();ctx.scale(hk,hk);VW=VW0/hk}const lvC=portrait,lx=lvC?VW/2-10:VW/2;
  VIS.hudBack(); const hy=10,col=VW/4;pxText('DINO',14,hy,14,'#fff');pxText(String(G.score).padStart(6,'0'),14,hy+16,17,'#fff59d');
  {const vx=col+4,vy=hy+1;ctx.fillStyle='#000';ctx.fillRect(vx,vy+3,16,11);ctx.fillStyle='#8d6e63';ctx.fillRect(vx+1,vy+8,14,6);ctx.fillRect(vx+4,vy+4,8,4);ctx.fillStyle='#ff6d00';ctx.fillRect(vx+5,vy+2,6,3);ctx.fillStyle='#ffea00';ctx.fillRect(vx+7,vy,2,3)}pxText('x'+(G.thrown||0),col+24,hy,14,'#ffcc80');
  spr(SPR.gem,col+4,hy+16,2.2);pxText('x'+String(gems).padStart(2,'0'),col+24,hy+17,13,'#fff');
