@@ -30,4 +30,4 @@ Full table with source pages, authors and match scores: `licences/SOUNDS-AND-ICO
 ## Icons
 - icons/*.png – own-made: our own pixel dino from sprites.js. `tools/make_icons.py` rebuilds them exactly.
 
-Still unverified: nothing in this list.
+Sound effects and icons: traced to the pages above; page CC0 labels trusted.
