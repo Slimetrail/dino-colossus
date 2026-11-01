@@ -597,7 +597,7 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ct
  if(G.secBanner){ctx.globalAlpha=Math.min(1,G.secBanner.l);tc(G.secBanner.t.toUpperCase(),ty,16,'#fff');ctx.globalAlpha=1}
  if(G.banner)tc(G.banner.t.replace(/[^\x20-\x7E]/g,'').trim().toUpperCase(),G.silBot?VH*.52:VH*.36,26,'#ffea00');
  VIS.hudFront();ctx.restore()}
-let acc=0,last=0;function loop(t){if(btnLow&&!G.running){btnLow=false;$('menub').style.top=$('snd').style.top='4px'}const dt=Math.min(100,t-last||16);last=t;acc+=dt;if(silHold)acc=0;while(acc>=16.67){if(G.running&&!silHold)update();else if(G.parts)G.parts=G.parts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.l-=.01;return p.l>0});VIS.step();acc-=16.67}draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+let acc=0,last=0;function loop(t){if(btnLow&&!G.running){btnLow=false;$('menub').style.top=$('snd').style.top='4px'}const dt=Math.min(100,t-last||16);last=t;acc+=dt;if(silHold)acc=0;while(acc>=16.67){if(G.running)update();else if(G.parts)G.parts=G.parts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.l-=.01;return p.l>0});VIS.step();acc-=16.67}draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
 // ---- v15 HARD-ONLY silly human (v23/v24: walks away for up to 8 s; eat it to get ONE random harmless effect). Never on easy/medium.
 // stink: can't run sideways (jump still works); bubble: floats + drifts, pops, safe drop; pogo: auto-bounces.
 // Calm halves effect time. G.silGrace: while an effect runs (+1.5 s), falling into a pit/lava just puts you back, no hurt.
