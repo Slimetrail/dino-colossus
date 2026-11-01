@@ -91,9 +91,9 @@ try:
   cx,pg,errs=start_hard(b);die(pg);pg.evaluate("dispatchEvent(new Event('blur'))");pg.wait_for_timeout(2500)
   q0=pg.evaluate(CONTN);pg.evaluate("dispatchEvent(new Event('focus'))");pg.wait_for_timeout(1500);q1=pg.evaluate(CONTN)
   check(q0 is None and q1==20,f'item1: "Continue?" after OUT OF LIVES waits while blurred (blurred: {q0}, after focus: {q1})')
-  r=pg.evaluate("""async()=>{let n=0;pT(()=>n++,300);dispatchEvent(new Event('blur'));await new Promise(r=>setTimeout(r,900));const a=n;dispatchEvent(new Event('focus'));await new Promise(r=>setTimeout(r,700));return [a,n]}""")
+  r=pg.evaluate("""async()=>{if(typeof pT!=="function")return "no game clock";let n=0;pT(()=>n++,300);dispatchEvent(new Event('blur'));await new Promise(r=>setTimeout(r,900));const a=n;dispatchEvent(new Event('focus'));await new Promise(r=>setTimeout(r,700));return [a,n]}""")
   check(r==[0,1],f'item1: game-clock timer (boss start, champion tune, beeps) frozen while blurred, runs after focus {r}')
-  r=pg.evaluate("""async()=>{let n=0;pT(()=>n++,300);"""+HID.replace('(v=>','((v)=>')+"""(true);await new Promise(r=>setTimeout(r,900));const a=n;"""+HID+"""(false);await new Promise(r=>setTimeout(r,700));return [a,n]}""")
+  r=pg.evaluate("""async()=>{if(typeof pT!=="function")return "no game clock";let n=0;pT(()=>n++,300);"""+HID.replace('(v=>','((v)=>')+"""(true);await new Promise(r=>setTimeout(r,900));const a=n;"""+HID+"""(false);await new Promise(r=>setTimeout(r,700));return [a,n]}""")
   check(r==[0,1],f'item1: game-clock timer frozen while hidden, runs after visible {r}')
   allerrs+=errs;cx.close()
   # ---- item 1 / QA m3: hidden then visible WITHOUT focus keeps the blur hold; a tap resumes ----
