@@ -2,7 +2,7 @@
 // v12 look + feel layer: parallax, sky, juice, boss aura, sparkles, dress-up, sound table, music.
 // All art is drawn in code. Runs on the game's fixed 60 steps/sec clock (same speed at 60/90/120 Hz).
 const VIS=(()=>{
-const LS=localStorage,TAU=Math.PI*2;
+const LS=(()=>{try{const l=window.localStorage;l.setItem('__t','1');l.removeItem('__t');return l}catch(e){return {}}})(),TAU=Math.PI*2;
 const rnd=(a,b)=>a+Math.random()*(b-a);
 let calm=LS.dinoColossus_Calm==='1',tapped=false;
 const MAXP=60; // particle cap for v12 effects

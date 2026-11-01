@@ -26,9 +26,15 @@ Curves (x = Dx, or D for bosses):
 | Bad surprise | .35–.39 | .43–.48 | .60 |
 | Pit chance | .233–.292 | .249–.313 | .286–.353 |
 
-Hard only: silly human every 20–35 s, 1.2 s warning, then stink (no run, 1.8 s), bubble (safe float, 2.6 s) or pogo (2.0 s). Never kills; falls during/after effect respawn without hurt. Calm halves durations, no shake/vibration.
+Hard only: silly human every 20–35 s; it walks away from the dino for up to 8 s (v24; must be chased and eaten), then stink (no run, 1.8 s), bubble (safe float, 2.6 s) or pogo (2.0 s). Never kills; falls during/after effect respawn without hurt. Calm halves durations, no shake/vibration.
 
 ## v23 changes (Hard only; Easy and Medium unchanged)
 - Spear people: Hard multiplier 0.35 (v22) x 1.2 = 0.42. Per section 1/3/5: v14 base 3/8/12, v22 1/3/4, v23 1/3/5. Sections 1-10 total: v22 46, v23 55.
 - Rolling boulders: Hard boulder gap / 0.7 (30% fewer boulders per minute). Middle draw s1/s3/s5: v22 2.21/1.83/1.6 s -> v23 3.16/2.61/2.29 s. Falling meteor rocks (Meteor Shower challenge) are not rolling rocks and are unchanged.
-- Silly human: no longer runs into the dino's mouth. It appears on the ground ahead of the dino and walks away (1.1 px/frame, dino 3.5). Its trick happens only if you catch and eat it; if it leaves the screen or 14 s pass, it is gone with no trick.
+- Silly human: no longer runs into the dino's mouth. It appears on the ground ahead of the dino and walks away (1.1 px/frame, dino 3.5). Its trick happens only if you catch and eat it; if it leaves the screen or 14 s pass, it is gone with no trick. (v24 note: in v23 it left the screen after about 2.7 to 3.5 s, so the 14 s limit never showed; see v24. Catching it gives no points, only its trick.)
+
+## v24 changes (Hard only; Easy and Medium unchanged)
+- Silly human spawn: 120 px clear of the dino's body (gap between the two boxes), on the side the dino faces, walking away. If that side has no room on screen (8 px margin), it spawns 120 px on the other side and walks away that way. If the dino is put back after a pit (moves >20 px in one frame), the human is placed again 120 px away.
+- It stops at the screen edge (8 px in) instead of walking off, and is gone after 8 s if not caught (v23: 14 s on paper, but it walked off in about 3.4 s). Chase from 120 px: about 50 frames (0.8 s) at 3.5 vs 1.1 px/frame; a player who starts 3 s late still catches it at about 5.1 s (measured on a pretend phone, flat ground).
+- Spear people: Hard = round(v22 value x 1.2) per section (v23 used round(base x .42)). Sections 1-10: v22 1,3,3,4,4,5,5,7,7,7 (46) -> v24 1,4,4,5,5,6,6,8,8,8 (55).
+- Boulder gap / 0.7 unchanged from v23.

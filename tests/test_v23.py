@@ -12,8 +12,8 @@ def check(c,m):
     if c: passes+=1
     else: fails.append(m)
 sw=open(os.path.join(ROOT,'sw.js')).read();html=open(os.path.join(ROOT,'index.html')).read()
-check('const VER="23"' in sw and sw.count('?v=23')==4 and '?v=22' not in sw,'sw VER 23, cache dinocol-v23, SHELL ?v=23')
-check(html.count('?v=23')==5 and '>v23 · A Slimetrail production<' in html,'index.html ?v=23 and footer "v23 · A Slimetrail production"')
+check('const VER="24"' in sw and sw.count('?v=24')==4 and '?v=23' not in sw,'sw VER 23, cache dinocol-v24, SHELL ?v=24')
+check(html.count('?v=24')==5 and '>v24 · A Slimetrail production<' in html,'index.html ?v=24 and footer "v24 · A Slimetrail production"')
 check(os.path.exists(os.path.join(ROOT,'CHANGES-v23.md')),'CHANGES-v23.md exists')
 code=' '.join(open(os.path.join(ROOT,f)).read().lower() for f in ['index.html','game.js','vis.js','sprites.js','sw.js','intro.js'])
 for w in ['adsense','admob','doubleclick','applovin','unityads','gtag','analytics','fbq','utm_','affiliate','adsbygoogle']: check(w not in code,f'ad scan: no {w}')
@@ -29,7 +29,7 @@ try:
   tab={}
   for d in ['easy','medium','hard']:
     cx,pg=game(b,d)
-    tab[d]=pg.evaluate("[1,2,3,4,5,6,7,8,9,10].map(n=>{const x=__dc.Dx(n),RT=__dc.DK.rate(x),base=Math.min(5,1+(n>>1))*RT;return {n,old:Math.min(12,Math.round(base)),v22:Math.min(12,Math.round(base*.35)),now:__dc.rangerN(n,RT),want:Math.min(12,Math.round(base*.42))}})")
+    tab[d]=pg.evaluate("[1,2,3,4,5,6,7,8,9,10].map(n=>{const x=__dc.Dx(n),RT=__dc.DK.rate(x),base=Math.min(5,1+(n>>1))*RT;return {n,old:Math.min(12,Math.round(base)),v22:Math.min(12,Math.round(base*.35)),now:__dc.rangerN(n,RT),want:Math.min(12,Math.round(Math.round(base*.35)*1.2))}})")
     # 2 rolling boulders: record each new boulder gap (Math.random fixed at 0/.5/.99 -> 6/8/~10 s draws)
     tab[d+'_boul']=pg.evaluate("""()=>{const D=__dc,G=D.G;const out=[];for(const rv of [0,.5,.99]){Math.random=()=>rv;const cur=G.cur;G.boulT=0;G.boulders=[];G.boss=null;G.inBonus=0;
       const n0=G.boulders.length;G.hearts=5;G.inv=9999;update();const got=G.boulT;const x=D.Dx(),f=Math.max(1.6,((6+4*rv)-Math.min(3,G.cur*.3))/D.DK.rate(x));out.push({rv,cur:G.cur,v22gap:+f.toFixed(3),gap:+got.toFixed(3)})}return out}""")

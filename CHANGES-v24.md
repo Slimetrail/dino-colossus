@@ -1,0 +1,12 @@
+# v24 – Hard fixes from Skeptic and QA (local, not published)
+- Silly human (Hard only) now appears 120 px clear of the dino, on the side the dino faces, and walks away. If the dino is at a screen edge with no room on that side, it appears on the other side and walks away from the dino. If the dino is put back after a pit, the human is placed 120 px away again. Standing still never eats it; you have to chase it (dino 3.5 px/frame, human 1.1).
+- It now stops at the screen edge instead of walking off, and leaves after 8 s if not caught (in v23 it walked off after about 3.4 s, so the 14 s limit never showed). Catching it gives no points, only its trick (toot, bubble or pogo).
+- How to play: "A silly human walks away from your dino. Chase it and eat it to see its silly trick" (was "pops up").
+- Spear people (Hard): each section = round(v22 value x 1.2): 1,4,4,5,5,6,6,8,8,8 = 55 (v23 gave 1,3,3,5,5,6,6,8,9,9).
+- Title sound button (🔊) is now on top of the title screen and can be tapped (QA D6).
+- If the browser blocks storage, the game still starts (saves are kept in memory for that visit only) (QA D4).
+- Layout: 360x640 credit line now fits on screen; portrait belly count no longer cut at the right edge (QA D5). 640x360 belly vs 🏠/🔊 overlap NOT fixed (needs a HUD re-layout).
+- Not done: licence texts for the Kenney and "SdiviHall" sounds (QA D7) - could not be verified per file (see report).
+- No new points, no new art. Boulders / 0.7 (v23) unchanged. Easy and Medium unchanged.
+- Version 24: sw VER (cache dinocol-v24), ?v=24, footer "v24 · A Slimetrail production". Version checks in test_v21/22/23 moved to 24; test_v23 spear check now expects round(v22 x 1.2). New tests/test_v24.py.
+- CHANGES-v23.md and DIFFICULTY.md wording corrected.
