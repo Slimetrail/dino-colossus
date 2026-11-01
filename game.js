@@ -594,6 +594,7 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ct
   belMeter(Math.max(lo0,Math.min(col*3,VW-rs-mw)),hy)}
  for(let i=0;i<Math.min(G.hearts,6);i++)spr(SPR.heart,14+i*17,hy+36,2);if(G.hearts>6)pxText('+'+(G.hearts-6),14+6*17,hy+34,12,'#fff');pxText('LIVES',lx,hy+36,12,'#fff');for(let i=0;i<(lvC?Math.min(1,G.lives):G.lives);i++){ctx.save();ctx.beginPath();ctx.rect(lx+46+i*20,hy+30,18,18);ctx.clip();spr(SPR.dino[pick][0],lx+46+i*20-12,hy+31,1.5,false);ctx.restore()}
  if(lvC&&G.lives>0)pxText('x'+G.lives,lx+66,hy+36,12,'#fff');
+ G.hudK=hk;G.livesR=lvC?lx+66+(G.lives>0?ctx.measureText('x'+G.lives).width:0):lx+46+G.lives*20; // v27: right edge of the lives row (tests check it stays clear of the belly meter)
  if(carn()){const s=curSec(G.d.x);spr(SPR.little[0][0],col+4,hy+37,1.3);pxText(s.ate+'/'+s.goal,col+24,hy+36,12,s.ate>=s.goal?'#b2ff59':'#fff')}
  if(hk!==1){ctx.restore();VW=VW0}
  const tc=(t,y,sz,c)=>{ctx.font='bold '+sz+'px "Courier New",monospace';const w=ctx.measureText(t).width;if(w>VW-16)sz=Math.floor(sz*(VW-16)/w);pxText(t,VW/2,y,sz,c,'center')};
