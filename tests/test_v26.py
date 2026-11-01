@@ -101,12 +101,15 @@ try:
   shown=False
   for i in range(40):
    pg.wait_for_timeout(250)
-   if pg.evaluate("!document.getElementById('updb').classList.contains('hide')"):shown=True;break
+   try:
+    if pg.evaluate("(()=>{const e=document.getElementById('updb');return !!e&&!e.classList.contains('hide')})()"):shown=True;break
+   except Exception as e:pass
   check(shown,'item6: new version found, "Update ready" button shows')
   if shown:
    with pg.expect_navigation():pg.tap('#updb')
    pg.wait_for_timeout(1500);pg.evaluate("navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{})");pg.wait_for_timeout(3500)
-   again=pg.evaluate("({shown:window.DINO_UPD?DINO_UPD.shown:-1,btn:!document.getElementById('updb').classList.contains('hide')})")
+   try:again=pg.evaluate("({shown:window.DINO_UPD?DINO_UPD.shown:-1,btn:!document.getElementById('updb').classList.contains('hide')})")
+   except Exception as e:again={'shown':-9,'btn':True,'err':str(e)[:80]}
    regs=pg.evaluate("navigator.serviceWorker.getRegistrations().then(rs=>rs.map(r=>[(r.active||{}).scriptURL,!!r.waiting,!!r.installing]))")
    print('UPD after one tap',again,regs)
    check(again['shown']==0 and not again['btn'],f'item6: after one tap and one reload, no second "Update ready" button {again}')
