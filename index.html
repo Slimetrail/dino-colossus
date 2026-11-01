@@ -88,6 +88,13 @@ table.top tbody tr:nth-child(even){background:#ffffff12}table.top tr.new{backgro
 @media (max-height:460px){#dgrid button{width:78px;min-height:64px}#dgrid button img{width:36px;height:36px}#dress h2{font-size:20px}#dress .big{margin-top:2px}#dtabs button{min-height:44px;font-size:14px}}
 
 @media (orientation:portrait) and (max-height:680px){#slogo{font-size:40px!important}} /* v24 (QA D5): credit line fits at 360x640 */
+/* v27 (QA m1): Continue YES/NO fit on 320 px screens */
+@media (max-width:400px){#contq>div:last-child{gap:10px!important}#contYes,#contNo{min-width:0!important;width:calc(50vw - 24px);max-width:150px;font-size:24px!important}}
+/* v27 (QA m2): Dress up in portrait: one column; the item grid scrolls on its own and the Done button sits below it, never on top of an item */
+@media (orientation:portrait){#dress{flex-direction:column;justify-content:flex-start;gap:2px;padding-top:6px;padding-bottom:8px}#dL{display:grid;grid-template-columns:auto auto;align-items:center;column-gap:10px;flex:none;padding-right:50px;box-sizing:border-box;max-width:100%}#dL h2{grid-column:1;grid-row:1}#dstarline{grid-column:1;grid-row:2}#dprev{grid-column:2;grid-row:1/3}#dL h2{font-size:19px;white-space:nowrap}#dstarline{white-space:nowrap;font-size:18px}#dprev{width:min(110px,18vh);height:min(110px,18vh)}#dstarline{margin:0}
+ #dR{flex:1 1 auto;min-height:0;width:100%}#dgrid{max-height:none;flex:1 1 auto;min-height:0;max-width:100%}#dressx{flex:none;margin-top:4px}#dmsg{margin:2px 0;flex:none}#dtabs{flex:none;gap:4px}#dtabs button{min-height:44px;font-size:14px;padding:0 8px}}
+/* v27 (QA): 320x480: the start screen fits without scrolling, Sound button on screen */
+@media (orientation:portrait) and (max-height:500px){#slogo{font-size:22px!important}#start h1{font-size:22px}#start p{font-size:11px;margin:0;line-height:1.15}#start .big{padding:4px 20px;font-size:17px;margin-top:2px}#start .sm{margin-top:1px;padding:3px 10px}#srow{gap:2px}#srow .sm{margin-top:1px}#dinos img{width:26px;height:26px}#diffs{margin-top:2px!important}#diffs .sm{padding:3px 12px}#ver{font-size:11px}}
 </style></head><body>
 <div id="sap"></div><canvas id="c"></canvas>
 <button id="snd" style="position:fixed;top:4px;right:4px;z-index:6;font-size:18px;background:#0008;border:0;border-radius:6px;padding:3px 6px;color:#fff">🔊</button><button id="menub" type="button" aria-label="menu" style="position:fixed;top:4px;right:52px;z-index:3;font-size:18px;background:#0008;border:0;border-radius:6px;padding:3px 6px;color:#fff">🏠</button><div id="hud"><span>⭐<b id="score">0</b></span><span id="hearts"></span><span id="belly"></span><span id="goal"></span><span>💎<b id="gems">0</b></span><span>🗺️<b id="sec">1</b></span></div>
