@@ -22,8 +22,8 @@ def check(c,m):
 rd=lambda f,r=ROOT:open(os.path.join(r,f),encoding='utf8').read() if os.path.exists(os.path.join(r,f)) else ''
 sw=rd('sw.js');html=rd('index.html');gj=rd('game.js')
 # ---- version ----
-check('const VER="27"' in sw and sw.count('?v=27')==4 and '?v=26' not in sw,'sw VER 27, SHELL ?v=27')
-check(html.count('?v=27')==4 and '?v=26' not in html and '>v27 · A Slimetrail production<' in html,'index.html ?v=27 and footer "v27 · A Slimetrail production"')
+check('const VER="28"' in sw and sw.count('?v=28')==4 and '?v=27' not in sw,'sw VER 28 (v28 bump), SHELL ?v=28')
+check(html.count('?v=28')==4 and '?v=27' not in html and '>v28 · A Slimetrail production<' in html,'index.html ?v=28 and footer "v28 · A Slimetrail production" (v28 bump)')
 check(os.path.exists(os.path.join(ROOT,'CHANGES-v27.md')),'CHANGES-v27.md exists')
 code=' '.join(rd(f).lower() for f in ['index.html','game.js','vis.js','sprites.js','sw.js','intro.js'])
 for w in ['adsense','admob','doubleclick','applovin','unityads','gtag','analytics','fbq','affiliate','adsbygoogle','googlesyndication']: check(w not in code,f'ad scan: no {w}')
@@ -182,7 +182,7 @@ try:
   scen.n=0
   tmp=tempfile.mkdtemp();cur=os.path.join(tmp,'cur');shutil.copytree(ROOT,cur,ignore=shutil.ignore_patterns('.git','sounds-silly'),copy_function=shutil.copy)
   nxt=os.path.join(tmp,'nxt');shutil.copytree(cur,nxt,copy_function=shutil.copy);bump(nxt)
-  scen('next-version-missing-game.js',cur,nxt,['game.js'],lambda r:all('v27 ·' in v or 'v26 ·' in v for _,v in r) and not any('9 ·' in v for _,v in r))
+  scen('next-version-missing-game.js',cur,nxt,['game.js'],lambda r:all('v28 ·' in v or 'v27 ·' in v for _,v in r) and not any('9 ·' in v for _,v in r))
   old=os.path.join(tmp,'v26');os.makedirs(old)
   if subprocess.run(f"git -C '{REPO}' archive f086eaaa0d21730c8e56f51287a8351021cebb27 | tar -x -C '{old}'",shell=True).returncode==0:
       scen('v26-to-this-missing-game.js',old,cur,['game.js'],lambda r:all(v for _,v in r))
