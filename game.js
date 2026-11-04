@@ -172,8 +172,17 @@ function hurt(why,o){o=o||{};if(G.hit||G.safeT>0||!G.running||G.inv)return;VIS.b
  G.hearts--;msg(why,G.d.x,G.d.y-40);for(let i=0;i<8;i++)G.smoke.push({x:G.d.x+17,y:G.d.y+10,vx:R(-1.5,1.5),vy:R(-2,-.5),r:8,l:.8});G.d.vy=-6;beep(200,.3,'triangle',80);hud();if(G.hearts<=0&&!G.dying)loseLife()}
 // ---- v17 respawn: safe spot back from pit edges, 0.5 s blink pause, 1.5 s safe moment, held left/right ignored until released
 function safeSpot(){const d=G.d,ok=x=>[-24,0,d.w/2,d.w,d.w+40].every(o=>groundTop(x+o)!=null);let x=Math.max(G.camX+10,G.lastSafe.x-10);
- for(let k=0;k<60&&!ok(x);k++)x-=10;if(x<G.camX+10||!ok(x))x=Math.max(G.camX+10,G.lastSafe.x-10);const gt=groundTop(x+d.w/2);return {x,y:(gt!=null?gt:G.lastSafe.y+d.h)-d.h-2}}
+ for(let k=0;k<60&&!ok(x);k++)x-=10;if(x<G.camX+10||!ok(x))x=safeNear(Math.max(G.camX+10,G.lastSafe.x-10));const gt=groundTop(x+d.w/2);return {x,y:(gt!=null?gt:G.lastSafe.y+d.h)-d.h-2}}
+// v28 (Jeremy t1634u): never put the dino back over a hole. Search outward (left/right, 10 px steps, at most 240 tries each way, so it cannot loop forever)
+// for the nearest spot with ground under the whole dino; first on screen, then anywhere loaded; last resort: the middle of the nearest ground piece.
+function safeNear(x0){const d=G.d,ok=x=>[-8,0,d.w/2,d.w,d.w+8].every(o=>groundTop(x+o)!=null),L=G.camX+10,Rr=G.camX+VW-d.w-10;
+ for(const lim of [1,0])for(let k=0;k<=240;k++)for(const s of k?[-1,1]:[1]){const x=x0+s*k*10;if(lim&&(x<L||x>Rr))continue;if(ok(x))return x}
+ let b=null,bd=1e9;for(const g of G.solids)if(g.k=='g'&&g.w>=d.w+16){const c=g.x+g.w/2,dd=Math.abs(c-x0);if(dd<bd){bd=dd;b=c}}return b!=null?b-d.w/2:x0}
+// v28 (Jeremy t1634u): a boulder whose middle is over a hole and has dropped below the ground line is gone (no more hits, no drawing).
+function holePuff(x,y){for(let i=0;i<6;i++)G.parts.push({x,y:y+10,vx:R(-2,2),vy:R(-4,-1),l:.5,r:3,c:'#ffab40'})}
+function holeGone(b){if(G.inBonus||G.arena)return false;if(groundTop(b.x+b.w/2)==null&&b.y>GY-b.h+8){holePuff(b.x+b.w/2,GY);return true}return false}
 function respawn(how){const d=G.d;if(G.inBonus){d.x=Math.min(Math.max(d.x,G.bonusX+2),G.bonusX+G.bonusW-d.w-2);d.y=GY-d.h-2}else if(how!=='stay'){const p=safeSpot();d.x=p.x;d.y=p.y}
+ if(!G.inBonus&&!G.arena&&groundTop(d.x+d.w/2)==null){d.x=safeNear(d.x);const gt=groundTop(d.x+d.w/2);if(gt!=null)d.y=gt-d.h-2} // v28: never left over a hole (also boss "stay" and Continue)
  d.vx=0;d.vy=0;G.spawnT=30;G.safeT=90;G.needRel=1;G.hit=Math.max(G.hit,90)}
 function loseLife(){G.lives--;if(G.lives<=0){G.dying=1;G.hearts=0;G.banner={t:'OUT OF LIVES!',l:2};const tok=G;pT(()=>{if(G===tok)askCont()},900);hud();return}
  G.hearts=5;G.hit=150;G.belly=0;G.banner={t:'LIFE LOST! '+G.lives+' LEFT',l:2};beep(330,.25,'triangle',165);pT(()=>beep(220,.35,'triangle',110),250);
@@ -391,8 +400,8 @@ function update(){const d=G.d;{const zt=G.boss&&!G.boss.gone?1:0;if(Math.abs(zt-
   if(ov(d,r)&&!G.hit){if(d.vy>0&&d.y+d.h-r.y<18){d.vy=-8;if(r.stun){poof(r.x+12,r.y+r.h/2);G.score+=50;hud();msg('Knocked out! +50',r.x,r.y-30,'#ffea00');r.y=GY+999}else{hurt('Ouch! Pointy spear!');msg('Spear points up! Jump OVER them.',r.x+12,r.y-30,'#ff8a80')}}else if(!r.stun){if(G.belly)dropLoad();else G.hit=30;knock(r)}}}
  G.rangers=G.rangers.filter(r=>r.y<GY+300);
  // boulders
- if(!G.boss&&!G.inBonus&&(G.boulT-=1/60)<=0){G.boulT=Math.max(1.6,(R(6,10)-Math.min(3,G.cur*.3))/DK.rate(Dx()))/(BOULDER_MUL[G.diff]||1);const x=G.camX+VW+20,t=groundTop(x);if(t!=null)G.boulders.push({x,y:t-28,w:28,h:28,vx:-2.6*DK.spd(Dx()),sp:DK.spd(Dx()),vy:0,a:0})}
- G.boulders=G.boulders.filter(b=>{b.vx=-2.6*(b.sp||1);moveBody(b);b.a-=.09;if(b.hitWall){b.vy=-7;b.x-=2}if(ov(d,b)&&!G.hit){if(G.belly)dropLoad();else G.hit=30;knock(b)}return b.y<GY+300&&b.x>G.camX-80});
+ if(!G.boss&&!G.inBonus&&(G.boulT-=1/60)<=0){G.boulT=Math.max(1.6,(R(6,10)-Math.min(3,G.cur*.3))/DK.rate(Dx()))/(BOULDER_MUL[G.diff]||1);const x=G.camX+VW+20,t=groundTop(x);if(t!=null&&groundTop(x+14)!=null)G.boulders.push({x,y:t-28,w:28,h:28,vx:-2.6*DK.spd(Dx()),sp:DK.spd(Dx()),vy:0,a:0})}
+ G.boulders=G.boulders.filter(b=>{b.vx=-2.6*(b.sp||1);moveBody(b);if(holeGone(b))return false;b.a-=.09;if(b.hitWall){b.vy=-7;b.x-=2}if(ov(d,b)&&!G.hit){if(G.belly)dropLoad();else G.hit=30;knock(b)}return b.y<GY+300&&b.x>G.camX-80});
  // volcano
  for(const v of G.vols){if(!G.busyVol&&d.on&&d.x+d.w>v.x&&d.x<v.x+v.w){if(v.end&&!v.done){v.done=1;const n=G.belly,bonus=100*v.sec+n*50;G.score+=bonus;G.banner={t:'SECTION '+v.sec+' CLEAR! +'+bonus,l:2.4};G.chT=Math.max(G.chT,6);if(n)erupt(v);else{G.belly=0;boom(0,v)}beep(784,.15);pT(()=>beep(1046,.3),160)}else if(G.belly&&!v.end)erupt(v)}}
  // pickups
@@ -410,7 +419,7 @@ function update(){const d=G.d;{const zt=G.boss&&!G.boss.gone?1:0;if(Math.abs(zt-
  // challenges / boss
  if(G.boss)updBoss();else if(!G.inBonus){if(G.ch){G.ch.t-=1/60;CHALLENGES[G.ch.k].update(G.ch);if(G.ch&&G.ch.t<=0.02)endChallenge()}else if((G.chT-=1/60)<=0&&G.d.x>400)startChallenge()}
  G.meteors=G.meteors.filter(m=>{m.t++;if(m.t>=m.T){if(m.mini){if(Math.abs(d.x+d.w/2-m.x)<18+d.w/2&&d.y+d.h>m.y-50)hurt('Bonk! Mini meteor');return false}for(let i=0;i<10;i++)G.parts.push({x:m.x,y:m.y,vx:R(-3,3),vy:R(-5,-1),l:.8,r:R(3,6),c:m.rock?'#8d6e63':'#ff6d00'});beep(90,.2,'triangle',40);if(Math.abs(d.x+d.w/2-m.x)<26+d.w/2&&d.y+d.h>m.y-60)hurt(m.rock?'Bonk! 🪨':'Bonk! ☄️');return false}return true});
- G.lava=G.lava.filter(f=>{f.x+=f.vx;f.ph+=.1;const t=groundTop(f.x+f.w/2);if(t==null)return false;f.y=t;if(d.x+d.w>f.x+4&&d.x<f.x+f.w-4&&d.y+d.h>=t-3&&d.on)hurt('Hot hot! 🔥');return f.x+f.w>G.camX});
+ G.lava=G.lava.filter(f=>{f.x+=f.vx;f.ph+=.1;const t=groundTop(f.x+f.w/2);if(t==null||groundTop(f.x+2)==null){holePuff(f.x+f.w/2,GY);return false}f.y=t;if(d.x+d.w>f.x+4&&d.x<f.x+f.w-4&&d.y+d.h>=t-3&&d.on)hurt('Hot hot! 🔥');return f.x+f.w>G.camX});
  G.waves=G.waves.filter(w=>{w.x+=w.vx;if(w.vx>0&&w.x>G.camX+VW+30)return false;if(d.x+d.w>w.x&&d.x<w.x+20&&d.y+d.h>=GY-w.h&&d.on&&!G.hit)hurt(w.tail?'Swish! Tail!':'Stomp wave!');return w.x>G.camX-30});
  // fx
  G.toss=G.toss.filter(o=>++o.t<30);G.goo=G.goo.filter(g=>{g.x+=g.vx;g.y+=g.vy;g.vy+=.3;g.l-=.025;return g.l>0});
@@ -662,4 +671,4 @@ function sillyFx(s,d,cx,cy){
  const f=s.fx;if(!f)return;const ic2={stink:'💨',bubble:'🫧',pogo:'🦘'}[f.k];silBanner(ic2+' '+SIL.say[f.k]+' '+ic2,'#2e7d32','#fff',1,.75);if(f.k=='stink'){ctx.save();for(let i=0;i<5;i++){const a=G.el*2+i*1.25;ctx.globalAlpha=.45;ctx.fillStyle=i%2?'#9ccc65':'#7cb342';ctx.beginPath();ctx.arc(cx+Math.cos(a)*20,cy+Math.sin(a)*12,11,0,6.283);ctx.fill()}ctx.restore()}
  else if(f.k=='bubble'){ctx.save();const r=Math.max(d.w,d.h)*.8+Math.sin(G.el*6)*2;ctx.globalAlpha=.35;ctx.fillStyle='#b3e5fc';ctx.beginPath();ctx.arc(cx,cy,r,0,6.283);ctx.fill();ctx.globalAlpha=.9;ctx.strokeStyle='#e1f5fe';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx-r*.4,cy-r*.45,4,0,6.283);ctx.fill();ctx.restore()}
  else if(f.k=='pogo'){ctx.save();ctx.strokeStyle='#ff7043';ctx.lineWidth=3;ctx.beginPath();const by=d.y+d.h;for(let i=0;i<5;i++){ctx.lineTo(cx+(i%2?-6:6),by+i*3)}ctx.stroke();ctx.restore()}}
-window.__dc={get silHold(){return silHold},rangerN,RANGER_MUL,BOULDER_MUL,sillyHum,DMUL,Dx,Dbase,DK,rampP,thrCfg,SIL,sillyStart,sillyUpd,BIG_SPD,BIG_CHANCE,poof,msg,useAtk,ITEMS,THROW,hurt,say,loadTop,insertTop,qualifies,topBest,showEnd,readLines,pickVoice,stageOf,STAGES:{FAT_AT,ROLL_AT,FAT_SPD,FAT_JMP,ROLL_JMP,ROLL_MAX,ROLL_ACC,ROLL_FRIC,ROLL_CAP},get G(){return G},get CHALLENGES(){return CHALLENGES},CRIT,get diff(){return diff},get ORDER(){return ORDER},loseLife,respawn,safeSpot,enterBonus,exitBonus,askCont,contYes,contNo,mystery,breakBrick,BOSSES,NBOSS,ARCH,bossHP,bossSpd,saveRun,loadRun,clearRun,champion,bossesBeat,GOOD,BAD,start,startChallenge,startBoss,enterBonus,exitBonus,UNL,usePower,erupt,cap,edgeIn,genSection,groundTop,get unl(){return unl},get pick(){return pick},consts:{T,GY,JV,GRAV,SPD,SEC_L},secLen,get view(){return {S,VW,VH,WY,OY,ZK,AW:AW()}}};
+window.__dc={holeGone,safeNear,safeSpot,respawn,get silHold(){return silHold},rangerN,RANGER_MUL,BOULDER_MUL,sillyHum,DMUL,Dx,Dbase,DK,rampP,thrCfg,SIL,sillyStart,sillyUpd,BIG_SPD,BIG_CHANCE,poof,msg,useAtk,ITEMS,THROW,hurt,say,loadTop,insertTop,qualifies,topBest,showEnd,readLines,pickVoice,stageOf,STAGES:{FAT_AT,ROLL_AT,FAT_SPD,FAT_JMP,ROLL_JMP,ROLL_MAX,ROLL_ACC,ROLL_FRIC,ROLL_CAP},get G(){return G},get CHALLENGES(){return CHALLENGES},CRIT,get diff(){return diff},get ORDER(){return ORDER},loseLife,respawn,safeSpot,enterBonus,exitBonus,askCont,contYes,contNo,mystery,breakBrick,BOSSES,NBOSS,ARCH,bossHP,bossSpd,saveRun,loadRun,clearRun,champion,bossesBeat,GOOD,BAD,start,startChallenge,startBoss,enterBonus,exitBonus,UNL,usePower,erupt,cap,edgeIn,genSection,groundTop,get unl(){return unl},get pick(){return pick},consts:{T,GY,JV,GRAV,SPD,SEC_L},secLen,get view(){return {S,VW,VH,WY,OY,ZK,AW:AW()}}};
