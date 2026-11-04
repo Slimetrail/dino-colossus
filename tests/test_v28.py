@@ -80,11 +80,11 @@ try:
         check(s['ms']<200,f'{tag}: {how}: safe-spot search is quick ({s["ms"]} ms, no endless loop)')
     fresh();n=pg.evaluate(NOGROUND);check(n['err'] is None and n['ms']<200,f'{tag}: no ground loaded at all: respawn still returns quickly, no error {n}')
     if w==915:
-        fresh();pg.evaluate("()=>{"+PREP+"calm();G.hit=0;G.safeT=999;G.camX=pit.x-VW*.5;G.d.x=G.camX+40;G.d.y=GY-G.d.h;G.boulders.push({x:pit.x+pit.w-20,y:GY-28,w:28,h:28,vx:-2.6,sp:1,vy:0,a:0,tag:1});window.__pit=pit}")
-        pg.wait_for_timeout(250);pg.screenshot(path=SHOTS+'/boulder-at-hole.png')
+        fresh();pg.evaluate("()=>{"+PREP+"calm();G.hit=0;G.safeT=999;G.camX=pit.x-VW*.5;G.d.x=G.camX+40;G.d.y=GY-G.d.h;G.boulders.push({x:pit.x+pit.w+90,y:GY-28,w:28,h:28,vx:-2.6,sp:1,vy:0,a:0,tag:1});window.__pit=pit}")
+        pg.wait_for_timeout(500);pg.screenshot(path=SHOTS+'/boulder-at-hole.png')
         pg.wait_for_timeout(900);pg.screenshot(path=SHOTS+'/boulder-gone.png')
         fresh();pg.evaluate("()=>{"+PREP+"calm();G.hit=0;G.camX=pit.x-5;G.lastSafe={x:pit.x+pit.w/2,y:GY-40};G.d.x=pit.x+pit.w/2-17;G.d.y=GY-40;D.respawn('')}")
-        pg.wait_for_timeout(200);pg.screenshot(path=SHOTS+'/respawn-next-to-hole.png')
+        pg.wait_for_timeout(900);pg.screenshot(path=SHOTS+'/respawn-next-to-hole.png')
     check(not errs,f'{tag}: no page errors {errs[:3]}');cx.close()
   b.close()
 finally:
