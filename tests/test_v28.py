@@ -18,8 +18,8 @@ def check(c,m):
     else: fails.append(m)
 rd=lambda f:open(os.path.join(ROOT,f),encoding='utf8').read() if os.path.exists(os.path.join(ROOT,f)) else ''
 sw=rd('sw.js');html=rd('index.html')
-check('const VER="28"' in sw and sw.count('?v=28')==4 and '?v=27' not in sw,'sw VER 28, SHELL ?v=28')
-check(html.count('?v=28')==4 and '>v28 · A Slimetrail production<' in html,'index.html ?v=28 and footer v28')
+check('const VER="29"' in sw and sw.count('?v=29')==4 and '?v=27' not in sw,'sw VER 29, SHELL ?v=29')
+check(html.count('?v=29')==4 and '>v29 · A Slimetrail production<' in html,'index.html ?v=29 and footer v29')
 check(os.path.exists(os.path.join(ROOT,'CHANGES-v28.md')),'CHANGES-v28.md exists')
 # common: find a pit ahead, clear everything that could hurt, put the camera on it
 PREP='''const D=__dc,G=D.G;const calm=()=>{for(const k of ['bigs','boulders','critters','rangers','littles','meteors','vols','toss','fly','waves','bshots','people','lava'])if(Array.isArray(G[k]))G[k].length=0;G.ch=null;G.rival=null;G.sil=null;G.boulT=999};

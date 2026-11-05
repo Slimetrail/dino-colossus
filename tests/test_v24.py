@@ -13,8 +13,8 @@ def check(c,m):
     if c: passes+=1
     else: fails.append(m)
 sw=open(os.path.join(ROOT,'sw.js')).read();html=open(os.path.join(ROOT,'index.html')).read()
-check('const VER="28"' in sw and sw.count('?v=28')==4 and '?v=23' not in sw,'sw VER 24, SHELL ?v=28')
-check(html.count('?v=28')==4 and '>v28 · A Slimetrail production<' in html,'index.html ?v=28 and footer v24')
+check('const VER="29"' in sw and sw.count('?v=29')==4 and '?v=23' not in sw,'sw VER 24, SHELL ?v=29')
+check(html.count('?v=29')==4 and '>v29 · A Slimetrail production<' in html,'index.html ?v=29 and footer v24')
 check('pops up' not in html and 'walks away' in html,'How to play: silly human "walks away", no "pops up"')
 check(os.path.exists(os.path.join(ROOT,'CHANGES-v24.md')),'CHANGES-v24.md exists')
 code=' '.join(open(os.path.join(ROOT,f)).read().lower() for f in ['index.html','game.js','vis.js','sprites.js','sw.js','intro.js'])

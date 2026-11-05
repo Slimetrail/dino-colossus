@@ -397,11 +397,16 @@ function update(){const d=G.d;{const zt=G.boss&&!G.boss.gone?1:0;if(Math.abs(zt-
  G.bigs=G.bigs.filter(g=>g.y<GY+300);G.noms=G.noms.filter(n=>++n.t<22);
  // rangers
  for(const r of G.rangers){if(!vis(r))continue;if(r.stun){r.stun--;r.vx=0}else{const dx=d.x-r.x;if(G.belly&&Math.abs(dx)<260)r.vx=Math.sign(dx)*1.5*(r.sp||1);else if(!r.vx||Math.random()<.005)r.vx=pickA([-.8,.8])*(r.sp||1);if(r.on){const ax=r.x+(r.vx>0?r.w+2:-2);if(!solidBelow(ax,r.y+r.h+2))r.vx=-r.vx}}moveBody(r);if(r.hitWall)r.vx=-r.vx;
-  if(ov(d,r)&&!G.hit){if(d.vy>0&&d.y+d.h-r.y<18){d.vy=-8;if(r.stun){poof(r.x+12,r.y+r.h/2);G.score+=50;hud();msg('Knocked out! +50',r.x,r.y-30,'#ffea00');r.y=GY+999}else{hurt('Ouch! Pointy spear!');msg('Spear points up! Jump OVER them.',r.x+12,r.y-30,'#ff8a80')}}else if(!r.stun){if(G.belly)dropLoad();else G.hit=30;knock(r)}}}
+  // v29: a true head stomp (falling, feet in the top band, body centered on the spear guy) pops them. No damage, small bounce. A falling hit that misses the head still meets the pointy spear. Side contact is unchanged.
+  if(ov(d,r)&&!G.hit){const pen=d.y+d.h-r.y,cx=d.x+d.w/2,above=d.vy>0&&pen>0&&pen<18,head=above&&cx>r.x&&cx<r.x+r.w;
+   if(head||(above&&r.stun)){d.vy=-8;poof(r.x+r.w/2,r.y+8);squash(r);G.score+=50;hud();msg(head?'Pop!':'Knocked out! +50',r.x,r.y-30,'#ffea00');r.y=GY+999}
+   else if(above){d.vy=-8;hurt('Ouch! Pointy spear!');msg('Spear points up! Jump OVER them.',r.x+12,r.y-30,'#ff8a80')}
+   else if(!r.stun){if(G.belly)dropLoad();else G.hit=30;knock(r)}}}
  G.rangers=G.rangers.filter(r=>r.y<GY+300);
  // boulders
  if(!G.boss&&!G.inBonus&&(G.boulT-=1/60)<=0){G.boulT=Math.max(1.6,(R(6,10)-Math.min(3,G.cur*.3))/DK.rate(Dx()))/(BOULDER_MUL[G.diff]||1);const x=G.camX+VW+20,t=groundTop(x);if(t!=null&&groundTop(x+14)!=null)G.boulders.push({x,y:t-28,w:28,h:28,vx:-2.6*DK.spd(Dx()),sp:DK.spd(Dx()),vy:0,a:0})}
- G.boulders=G.boulders.filter(b=>{b.vx=-2.6*(b.sp||1);moveBody(b);if(holeGone(b))return false;b.a-=.09;if(b.hitWall){b.vy=-7;b.x-=2}if(ov(d,b)&&!G.hit){if(G.belly)dropLoad();else G.hit=30;knock(b)}return b.y<GY+300&&b.x>G.camX-80});
+ // v29: bounce off rocks (and any solid face). Direction flips; they do not hop over. holeGone still removes one that has dropped into a hole. A short step-out stops them sticking inside a face or tunneling through.
+ G.boulders=G.boulders.filter(b=>{const spd=2.6*(b.sp||1);if(b.dir!==1&&b.dir!==-1)b.dir=b.vx<0?-1:1;b.vx=b.dir*spd;moveBody(b);if(holeGone(b))return false;if(b.hitWall){b.dir=-b.dir;b.vx=b.dir*spd;let n=0;while(n++<8&&G.solids.some(s=>s.k!='g'&&s.k!='arena'&&ov(b,s)))b.x+=b.dir}b.a+=.09*b.dir;if(ov(d,b)&&!G.hit){if(G.belly)dropLoad();else G.hit=30;knock(b)}return b.y<GY+300&&b.x>G.camX-80});
  // volcano
  for(const v of G.vols){if(!G.busyVol&&d.on&&d.x+d.w>v.x&&d.x<v.x+v.w){if(v.end&&!v.done){v.done=1;const n=G.belly,bonus=100*v.sec+n*50;G.score+=bonus;G.banner={t:'SECTION '+v.sec+' CLEAR! +'+bonus,l:2.4};G.chT=Math.max(G.chT,6);if(n)erupt(v);else{G.belly=0;boom(0,v)}beep(784,.15);pT(()=>beep(1046,.3),160)}else if(G.belly&&!v.end)erupt(v)}}
  // pickups
