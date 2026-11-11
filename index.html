@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Dino Colossus</title><meta name="theme-color" content="#5c94fc"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><style>
+<title>Dino Colossus</title><meta name="theme-color" content="#5c94fc"><link rel="stylesheet" href="slimesplash/splash.css?v=1"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><style>
 html,body{margin:0;height:100%;overflow:hidden;background:#1b1b2f;font-family:'Courier New',monospace;font-weight:bold;touch-action:none;user-select:none;-webkit-user-select:none}
 #sap{position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-left:var(--sal,env(safe-area-inset-left,0px));padding-right:var(--sar,env(safe-area-inset-right,0px))}
 canvas{display:block;position:fixed;inset:0;touch-action:none}
@@ -96,6 +96,7 @@ table.top tbody tr:nth-child(even){background:#ffffff12}table.top tr.new{backgro
 /* v27 (QA): 320x480: the start screen fits without scrolling, Sound button on screen */
 @media (orientation:portrait) and (max-height:500px){#slogo{font-size:22px!important}#start h1{font-size:22px}#start p{font-size:11px;margin:0;line-height:1.15}#start .big{padding:4px 20px;font-size:17px;margin-top:2px}#start .sm{margin-top:1px;padding:3px 10px}#srow{gap:2px}#srow .sm{margin-top:1px}#dinos img{width:26px;height:26px}#diffs{margin-top:2px!important}#diffs .sm{padding:3px 12px}#ver{font-size:11px}}
 </style></head><body>
+<script src="slimesplash/splash.js?v=1" data-base="slimesplash/" data-sound="1" data-keep-above="#updb,#updfail"></script>
 <div id="sap"></div><canvas id="c"></canvas>
 <button id="snd" style="position:fixed;top:4px;right:4px;z-index:6;font-size:18px;background:#0008;border:0;border-radius:6px;padding:3px 6px;color:#fff">🔊</button><button id="menub" type="button" aria-label="menu" style="position:fixed;top:4px;right:52px;z-index:3;font-size:18px;background:#0008;border:0;border-radius:6px;padding:3px 6px;color:#fff">🏠</button><div id="hud"><span>⭐<b id="score">0</b></span><span id="hearts"></span><span id="belly"></span><span id="goal"></span><span>💎<b id="gems">0</b></span><span>🗺️<b id="sec">1</b></span></div>
 <button class="cb" id="bl">◀</button><button class="cb" id="br">▶</button><button class="cb" id="bj">JUMP</button><button class="cb hide" id="bp"></button><button class="cb hide" id="ba" type="button"></button><button id="bs" class="hide">swap power</button>
@@ -142,7 +143,7 @@ async function back(){if(!('caches'in window))return false;var ks=(await caches.
   for(var s of src){var r=await c.match(s);if(!r||!r.ok){good=false;break}t=t.split('src="'+s+'"').join('src="'+URL.createObjectURL(new Blob([await r.text()],{type:'text/javascript'}))+'"')}
   if(!good)continue;history.replaceState(null,'',clean());document.open();document.write(t);document.close();window.__dcFellBack=k;return true}return false}
 document.write('<plaintext style="display:none">');back().then(function(d){if(!d)retry()},retry)})();</script>
-<script src="sprites.js?v=29"></script><script src="vis.js?v=29"></script><script src="game.js?v=29"></script><script src="intro.js?v=29"></script>
+<script src="sprites.js?v=30"></script><script src="vis.js?v=30"></script><script src="game.js?v=30"></script><script src="intro.js?v=30"></script>
 <script>if(!window.__dcFB&&(window.__dcBad||typeof G==='undefined'||typeof VIS==='undefined'||typeof SPR==='undefined'||typeof INTRO==='undefined'))location.replace(location.pathname+(location.search?location.search+'&':'?')+'fb=1');</script>
 <button type="button" id="updb" class="hide" style="position:fixed;left:8px;bottom:8px;z-index:40;min-height:48px;padding:8px 14px;font:700 14px system-ui,sans-serif;color:#fff;background:#2e7d32;border:2px solid #fff;border-radius:12px;box-shadow:0 3px 0 #1b4d1f">Update ready — tap to reload</button>
 <script>/* v22 update button (like Starstruck): re-check for a new version on open/focus and every 5 min. The new worker caches every file, then takes over; only then this button appears. Never on the first install, never during a run, never reloads by itself. */

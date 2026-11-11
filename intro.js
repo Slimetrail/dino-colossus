@@ -260,6 +260,8 @@ function gate(why){if(off)return false;gateWhy=why;if(!gateEl){gateEl=document.c
 addEventListener('keydown',e=>{if(gateEl&&gateEl.style.display!=='none'){gateTap(e)}},true);
 addEventListener('pageshow',e=>{if(e.persisted&&!(typeof G!=='undefined'&&G&&G.running))gate('pageshow')});
 gate('launch');
+// t2569u SlimeTrail logo splash: the splash tap is the real gesture; when the logo fades, go straight on to the intro movie so one tap starts the game
+if(window.SlimeSplash)SlimeSplash.whenDone(()=>{try{dispatchEvent(new PointerEvent('pointerup'))}catch(_){}if(gateEl&&gateEl.style.display!=='none')gateTap()});
 function stats(){const a=ft.slice(5).sort((p,q)=>p-q);if(!a.length)return null;const avg=a.reduce((s,v)=>s+v,0)/a.length;const w=wk.slice(5).sort((p,q)=>p-q),wa=w.reduce((s,v)=>s+v,0)/w.length;return {n:a.length,avg,p95:a[Math.floor(a.length*.95)],max:a[a.length-1],fps:1000/avg,drawAvg:wa,drawP95:w[Math.floor(w.length*.95)]}}
 return {start,finish,stats,gate,get gates(){return gates},get gateUp(){return !!gateEl&&gateEl.style.display!=='none'},seek:v=>{t0=performance.now()-v/TS*1000;if(paused)T=v},pause:()=>{if(!paused){paused=1;pauseAt=performance.now()}},resume:()=>{if(paused){t0+=performance.now()-pauseAt;paused=0}},get hiddenAt(){return shownAt},get skipAt(){return skipAt},get T(){return T},get playing(){return playing},get runs(){return runs},get lastEnd(){return lastEnd},get calm(){return calm},get off(){return off},
  get counts(){return {smoke:P.smoke.length,lava:P.lava.length,ash:P.ash.length,dust:P.dust.length}},TIMES:{TE,TB,TI,FZ,TT,TEND,FADE,TOTAL:TEND+FADE}};
