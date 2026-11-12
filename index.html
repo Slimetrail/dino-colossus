@@ -1,6 +1,29 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Dino Colossus</title><meta name="theme-color" content="#5c94fc"><link rel="stylesheet" href="slimesplash/splash.css?v=1"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><style>
 html,body{margin:0;height:100%;overflow:hidden;background:#1b1b2f;font-family:'Courier New',monospace;font-weight:bold;touch-action:none;user-select:none;-webkit-user-select:none}
+/* t2785u: in portrait, rotate the whole page 90deg so the landscape layout fills the screen. No turn-your-phone notice. */
+@media (orientation:portrait){
+ html{width:100%;height:100%;overflow:hidden;background:#1b1b2f}
+ body{position:fixed;top:50%;left:50%;width:100vh;height:100vw;width:100dvh;height:100dvw;overflow:hidden;transform:translate(-50%,-50%) rotate(-90deg)}
+ /* vw/vh are the physical viewport; after rotate, game width is 100vh and game height is 100vw, so swap units */
+ #bl,#br{width:min(76px,21vw);height:min(76px,21vw);bottom:max(6px,3vw);font-size:min(30px,9vw)}#bl{left:max(12px,2vh)}#br{left:calc(max(12px,2vh) + min(76px,21vw) + 14px)}
+ #bj{width:min(86px,25vw);height:min(86px,25vw);bottom:max(4px,2.4vw);right:max(12px,2vh);font-size:min(18px,5.5vw)}
+ body #ba{width:min(80px,23vw);height:min(80px,23vw);bottom:max(5px,2.6vw);right:calc(max(12px,2vh) + min(86px,25vw) + 14px);font-size:min(30px,8.5vw)}
+ #bp{width:min(62px,18vw);height:min(62px,18vw);bottom:max(6px,3.5vw);right:calc(max(12px,2vh) + min(86px,25vw) + min(80px,23vw) + 28px)}
+ body #bs{min-height:36px;min-width:64px;padding:8px 10px;font-size:13px;bottom:calc(max(6px,3.5vw) + min(31px,9vw) - 18px);right:calc(max(12px,2vh) + min(86px,25vw) + min(80px,23vw) + 28px + min(62px,18vw) + 10px)}
+ #board,#end{padding:.8vw 2vh}
+ .tpanel{width:min(95vh,1100px);height:calc(98.4vw - 24px)}
+ .thead{gap:2vh;padding:.8vw 1.5vh}
+ .ttl{font-size:min(6.4vw,5vh)}
+ .tabs{gap:1vh}.tabs button{font-size:min(5.2vw,4vh);min-height:max(44px,10.5vw);min-width:max(64px,13vh);padding:0 1.5vh}
+ .tsub{font-size:min(4.2vw,3.4vh);padding:.4vw 1vh}
+ table.top{font-size:min(5.6vw,5vh)}
+ .hint{font-size:clamp(12px,3.4vw,18px)!important}
+ #dprev{width:min(200px,46vw);height:min(200px,46vw)}
+ #dgrid{max-height:46vw}
+ #opts input[type=range]{width:min(520px,80vh)}
+ #champ{padding-top:3vw!important}#champ h1{font-size:clamp(40px,13vw,96px)!important}#champ p{font-size:clamp(16px,5vw,28px)!important}#champ .hint{margin-bottom:2vw!important}
+}
 #sap{position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-left:var(--sal,env(safe-area-inset-left,0px));padding-right:var(--sar,env(safe-area-inset-right,0px))}
 canvas{display:block;position:fixed;inset:0;touch-action:none}
 #hud{display:none!important;position:fixed;top:0;left:0;right:0;height:44px;display:flex;gap:8px;justify-content:space-between;align-items:center;padding:0 8px;color:#fff;font-weight:800;font-size:15px;text-shadow:0 2px 3px #000a;pointer-events:none;background:#0006}
@@ -43,13 +66,13 @@ table.top tbody tr:nth-child(even){background:#ffffff12}table.top tr.new{backgro
 .col button:active{transform:translateY(3px);box-shadow:0 1px #b38b00}.col .L{font-size:52px;font-weight:900;width:76px;line-height:1.1;background:#fff;color:#2b2240;border-radius:12px;text-align:center}
 #end{overflow-y:auto}#endL,#endR{display:flex;flex-direction:column;align-items:center}
 #board{overflow:hidden;background:linear-gradient(#5c6bc0,#283593)}#end{overflow:hidden}
-@media (orientation:landscape) and (max-height:560px){#end h1{font-size:28px}#end p{margin:2px 0}
+@media (orientation:landscape) and (max-height:560px), (orientation:portrait) and (max-width:560px){#end h1{font-size:28px}#end p{margin:2px 0}
  .col button{height:52px}.col .L{font-size:44px}}
-@media (max-height:460px){.ov{padding:6px}.ov h1{font-size:28px;margin:0}.ov p{margin:3px 0;font-size:13px}.big{padding:7px 26px;font-size:19px;margin-top:5px}.sm{margin-top:4px;padding:5px 14px}#dinos button{font-size:22px;padding:2px 4px;margin:2px}#dinos img{width:32px;height:32px}#start>div:first-child{font-size:30px!important}}
+@media (max-height:460px), (orientation:portrait) and (max-width:460px){.ov{padding:6px}.ov h1{font-size:28px;margin:0}.ov p{margin:3px 0;font-size:13px}.big{padding:7px 26px;font-size:19px;margin-top:5px}.sm{margin-top:4px;padding:5px 14px}#dinos button{font-size:22px;padding:2px 4px;margin:2px}#dinos img{width:32px;height:32px}#start>div:first-child{font-size:30px!important}}
 
 #start{padding:calc(8px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));overflow-y:auto;justify-content:safe center}
 #sL,#sR,#sB{display:flex;flex-direction:column;align-items:center}
-@media (orientation:landscape) and (max-height:560px){
+@media (orientation:landscape) and (max-height:560px), (orientation:portrait){
  #start{display:grid;grid-template-columns:1fr 1.25fr;grid-template-rows:auto auto;column-gap:16px;align-items:center;justify-items:center;align-content:center}
  #sL{grid-column:1;grid-row:1}#sB{grid-column:1;grid-row:2;align-self:start}#sR{grid-column:2;grid-row:1/3}
  #slogo{font-size:30px!important;line-height:1}#start h1{font-size:30px;margin:0}
@@ -64,11 +87,9 @@ table.top tbody tr:nth-child(even){background:#ffffff12}table.top tr.new{backgro
 #quitYes,#quitNo{min-height:48px!important;min-width:48px;box-sizing:border-box}
 /* v25 (QA E3): every start-screen button is at least 44 px tall and wide */
 #start button{min-height:44px;min-width:44px;box-sizing:border-box}
-@media (orientation:landscape) and (max-height:460px){#srow{gap:4px}#srow .sm{margin-top:2px}#start .big{margin-top:3px}#start p{margin:1px 0}#ver{margin:1px 0 0!important}}
-@media (orientation:landscape) and (max-height:380px){#slogo{font-size:22px!important}#start h1{font-size:26px}}
-@media (orientation:portrait) and (max-height:680px){#srow{gap:4px}#srow .sm{margin-top:3px}#start .big{margin-top:6px}#start p{margin:3px 0}#start h1{margin:0}#dinos button{margin:2px}}
-/* v26 (QA): 320x568 small phones: everything on the start screen fits without scrolling */
-@media (orientation:portrait) and (max-height:600px){#start{padding-top:4px;padding-bottom:4px}#slogo{font-size:28px!important;line-height:1}#start h1{font-size:26px;margin:0}#start p{margin:1px 0;font-size:12px;line-height:1.2}#start .big{padding:6px 22px;font-size:18px;margin-top:3px}#start .sm{margin-top:2px;padding:4px 12px}#srow{gap:3px}#dinos button{margin:1px;padding:1px 3px}#dinos img{width:30px;height:30px}#ver{margin:1px 0 0!important}}
+@media (orientation:landscape) and (max-height:460px), (orientation:portrait) and (max-width:460px){#srow{gap:4px}#srow .sm{margin-top:2px}#start .big{margin-top:3px}#start p{margin:1px 0}#ver{margin:1px 0 0!important}}
+@media (orientation:landscape) and (max-height:380px), (orientation:portrait) and (max-width:380px){#slogo{font-size:22px!important}#start h1{font-size:26px}}
+
 #srow{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:360px}#srow .sm{margin-top:6px}
 #dressb{background:#e91e63!important;box-shadow:0 4px #880e4f}#calmb[aria-pressed=true]{background:#3949ab!important}
 #dress{background:linear-gradient(#7e57c2,#4527a0);flex-direction:row;gap:16px}#dL,#dR{display:flex;flex-direction:column;align-items:center}
@@ -85,17 +106,44 @@ table.top tbody tr:nth-child(even){background:#ffffff12}table.top tr.new{backgro
 #opts input[type=range]::-moz-range-thumb{width:44px;height:44px;border-radius:50%;background:#ffea00;border:4px solid #fff}
 #opts .pct{font-weight:bold}#optx{min-height:48px;margin-top:10px}
 #dressx{min-height:48px}#dmsg{font-size:15px;min-height:18px;margin:4px 0}
-@media (max-height:460px){#dgrid button{width:78px;min-height:64px}#dgrid button img{width:36px;height:36px}#dress h2{font-size:20px}#dress .big{margin-top:2px}#dtabs button{min-height:44px;font-size:14px}}
+@media (max-height:460px), (orientation:portrait) and (max-width:460px){#dgrid button{width:78px;min-height:64px}#dgrid button img{width:36px;height:36px}#dress h2{font-size:20px}#dress .big{margin-top:2px}#dtabs button{min-height:44px;font-size:14px}}
+/* v27 (QA m1): Continue YES/NO fit on a really narrow landscape game width only (not an upright phone, whose game width is 100vh) */
+@media (orientation:landscape) and (max-width:400px){#contq>div:last-child{gap:10px!important}#contYes,#contNo{min-width:0!important;width:calc(50vw - 24px);max-width:150px;font-size:24px!important}}
 
-@media (orientation:portrait) and (max-height:680px){#slogo{font-size:40px!important}} /* v24 (QA D5): credit line fits at 360x640 */
-/* v27 (QA m1): Continue YES/NO fit on 320 px screens */
-@media (max-width:400px){#contq>div:last-child{gap:10px!important}#contYes,#contNo{min-width:0!important;width:calc(50vw - 24px);max-width:150px;font-size:24px!important}}
-/* v27 (QA m2): Dress up in portrait: one column; the item grid scrolls on its own and the Done button sits below it, never on top of an item */
-@media (orientation:portrait){#dress{flex-direction:column;justify-content:flex-start;gap:2px;padding-top:6px;padding-bottom:8px}#dL{display:grid;grid-template-columns:auto auto;align-items:center;column-gap:10px;flex:none;padding-right:50px;box-sizing:border-box;max-width:100%}#dL h2{grid-column:1;grid-row:1}#dstarline{grid-column:1;grid-row:2}#dprev{grid-column:2;grid-row:1/3}#dL h2{font-size:19px;white-space:nowrap}#dstarline{white-space:nowrap;font-size:18px}#dprev{width:min(110px,18vh);height:min(110px,18vh)}#dstarline{margin:0}
- #dR{flex:1 1 auto;min-height:0;width:100%}#dgrid{max-height:none;flex:1 1 auto;min-height:0;max-width:100%}#dressx{flex:none;margin-top:4px}#dmsg{margin:2px 0;flex:none}#dtabs{flex:none;gap:4px}#dtabs button{min-height:44px;font-size:14px;padding:0 8px}}
-/* v27 (QA): 320x480: the start screen fits without scrolling, Sound button on screen */
-@media (orientation:portrait) and (max-height:500px){#slogo{font-size:22px!important}#start h1{font-size:22px}#start p{font-size:11px;margin:0;line-height:1.15}#start .big{padding:4px 20px;font-size:17px;margin-top:2px}#start .sm{margin-top:1px;padding:3px 10px}#srow{gap:2px}#srow .sm{margin-top:1px}#dinos img{width:26px;height:26px}#diffs{margin-top:2px!important}#diffs .sm{padding:3px 12px}#ver{font-size:11px}}
-</style></head><body>
+
+</style><script>
+/* t2785u: expose the landscape game size while the page is CSS-rotated in portrait, and remap client coordinates. */
+(function(){
+ var mq=window.matchMedia('(orientation: portrait)');
+ function rot(){return mq.matches}
+ function wh(){
+  if(!rot()) return {w:innerWidth,h:innerHeight};
+  var b=document.body;
+  if(b&&b.offsetWidth&&b.offsetHeight) return {w:b.offsetWidth,h:b.offsetHeight};
+  return {w:innerHeight,h:innerWidth};
+ }
+ function map(cx,cy){if(!rot())return {x:cx,y:cy};return {x:cy,y:wh().h-cx}}
+ function rect(el){
+  var r=el.getBoundingClientRect();
+  if(!rot()) return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height};
+  var a=map(r.left,r.top),b=map(r.right,r.bottom),c=map(r.left,r.bottom),d=map(r.right,r.top);
+  var xs=[a.x,b.x,c.x,d.x],ys=[a.y,b.y,c.y,d.y];
+  var L=Math.min.apply(null,xs),T=Math.min.apply(null,ys),R=Math.max.apply(null,xs),B=Math.max.apply(null,ys);
+  return {left:L,top:T,right:R,bottom:B,width:R-L,height:B-T};
+ }
+ function apply(){
+  document.documentElement.classList.toggle('dc-rot', rot());
+  try{
+   var inst=matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone;
+   if(inst&&screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(function(){});
+  }catch(e){}
+ }
+ apply();
+ if(mq.addEventListener) mq.addEventListener('change',function(){apply();dispatchEvent(new Event('resize'))});
+ else if(mq.addListener) mq.addListener(function(){apply();dispatchEvent(new Event('resize'))});
+ Object.defineProperty(window,'DCVIEW',{value:{get rot(){return rot()},get W(){return wh().w},get H(){return wh().h},map:map,rect:rect}});
+})();
+</script></head><body>
 <script src="slimesplash/splash.js?v=1" data-base="slimesplash/" data-sound="1" data-keep-above="#updb,#updfail"></script>
 <div id="sap"></div><canvas id="c"></canvas>
 <button id="snd" style="position:fixed;top:4px;right:4px;z-index:6;font-size:18px;background:#0008;border:0;border-radius:6px;padding:3px 6px;color:#fff">🔊</button><button id="menub" type="button" aria-label="menu" style="position:fixed;top:4px;right:52px;z-index:3;font-size:18px;background:#0008;border:0;border-radius:6px;padding:3px 6px;color:#fff">🏠</button><div id="hud"><span>⭐<b id="score">0</b></span><span id="hearts"></span><span id="belly"></span><span id="goal"></span><span>💎<b id="gems">0</b></span><span>🗺️<b id="sec">1</b></span></div>
@@ -138,7 +186,7 @@ window.__dcBad=0;window.__dcMiss=function(){window.__dcBad++};
 (function(){if(!/[?&]fb=1(&|$)/.test(location.search))return;window.__dcFB=1;
 function clean(){return location.pathname+location.search.replace(/([?&])fb=1(&|$)/,function(m,p,q){return q?p:''}).replace(/[?&]$/,'')}
 function retry(){var go=function(){var d=document.createElement('div');d.id='updfail';d.setAttribute('style','position:fixed;inset:0;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a237e;color:#fff;font:700 20px system-ui,sans-serif;text-align:center;padding:16px');d.innerHTML='<p>The game did not load all its files.</p><button type="button" style="min-height:56px;min-width:160px;font:700 22px system-ui,sans-serif;border-radius:14px;border:3px solid #fff;background:#43a047;color:#fff">🔄 Try again</button>';d.querySelector('button').onclick=function(){location.replace(clean())};document.body.appendChild(d)};if(document.readyState==='loading')addEventListener('DOMContentLoaded',go);else go()}
-async function back(){if(!('caches'in window))return false;var ks=(await caches.keys()).filter(function(k){return /^dinocol-v[0-9.]+$/.test(k)}).sort(function(a,b){return b.slice(9)-a.slice(9)});
+async function back(){if(!('caches'in window))return false;var ks=(await caches.keys()).filter(function(k){return /^dinocol-v[0-9.]+[a-z]?$/.test(k)}).sort(function(a,b){var na=parseFloat(a.slice(9)),nb=parseFloat(b.slice(9));return nb-na||b.length-a.length});
  for(var k of ks){var c=await caches.open(k),h=(await c.match('index.html'))||(await c.match('./'));if(!h)continue;var t=await h.text();var src=[...t.matchAll(/<script src="([^"]+)"/g)].map(function(m){return m[1]}),good=src.length>0;
   for(var s of src){var r=await c.match(s);if(!r||!r.ok){good=false;break}t=t.split('src="'+s+'"').join('src="'+URL.createObjectURL(new Blob([await r.text()],{type:'text/javascript'}))+'"')}
   if(!good)continue;history.replaceState(null,'',clean());document.open();document.write(t);document.close();window.__dcFellBack=k;return true}return false}
@@ -155,7 +203,7 @@ b.addEventListener('click',()=>{b.disabled=true;location.reload()});
 const chk=()=>{if(reg)reg.update().catch(()=>{})};
 sw.register('sw.js',{updateViaCache:'none'}).then(r=>{reg=r}).catch(()=>{});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()});addEventListener('focus',chk);setInterval(chk,5*60*1000);})();</script>
-<script>try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})}catch(e){}</script><script>(function(){let dp=null;const b=document.getElementById('instb'),t=document.getElementById('insth');
+<script>(function(){let dp=null;const b=document.getElementById('instb'),t=document.getElementById('insth');
 const inst=()=>matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone;
 if(inst())b.classList.add('hide');
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e});

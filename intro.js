@@ -12,7 +12,7 @@ const R=(a,b)=>a+Math.random()*(b-a),cl=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=
 function hs(n){n=Math.sin(n*91.7+3.1)*43758.5453;return n-Math.floor(n)}
 function title(){const h=document.querySelector('#start h1');return ((h&&h.textContent)||'Dino Colossus').trim()}
 function mkc(w,h){const c=document.createElement('canvas');c.width=Math.ceil(w*DPR);c.height=Math.ceil(h*DPR);const g=c.getContext('2d');g.scale(DPR,DPR);return [c,g]}
-function size(){W=innerWidth;H=innerHeight;DPR=Math.min(+(window.INTRO_DPR||1.25),devicePixelRatio||1);S=Math.min(H/390,W/700);VW=W/S;VH=H/S;GY=VH*.77;
+function size(){const v=window.DCVIEW||{W:innerWidth,H:innerHeight};W=v.W;H=v.H;DPR=Math.min(+(window.INTRO_DPR||1.25),devicePixelRatio||1);S=Math.min(H/390,W/700);VW=W/S;VH=H/S;GY=VH*.77;
  cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);L=null}
 // ---------- pre-rendered layers (drawn once per size) ----------
 function layers(){if(L)return L;L={};
@@ -238,7 +238,7 @@ function draw(now){const fdt=Math.min(.05,(now-(last||now))/1000);if(last)ft.pus
  sfx('roar',1.0);sfx('roar',TE+.1);sfx('land',TI);sfx('stomp',TI+.05);sfx('cheer',TI+1.0)}
 // ---------- lifecycle ----------
 function start(why){if(off)return false;if(!cv){cv=document.createElement('canvas');cv.id='intro';cv.setAttribute('aria-label','Intro movie. Tap to skip.');
-  cv.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;z-index:50;background:#000;touch-action:none;transition:opacity .6s';document.body.appendChild(cv);x=cv.getContext('2d');
+  cv.style.cssText='position:fixed;inset:0;width:100%;height:100%;z-index:50;background:#000;touch-action:none;transition:opacity .6s';document.body.appendChild(cv);x=cv.getContext('2d');
   cv.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();skipAt=performance.now();finish(false)});addEventListener('resize',()=>{if(playing)size()})}
  calm=!!(typeof VIS!=='undefined'&&VIS.calm)||matchMedia('(prefers-reduced-motion: reduce)').matches;TS=calm?1.5:1;
  cancelAnimationFrame(raf);size();T=0;ST=0;last=0;ending=0;paused=0;prevC=[0,0,0,0];fired={};P={smoke:[],lava:[],ash:[],dust:[]};ft=[];wk=[];playing=true;runs++;lastEnd=null;

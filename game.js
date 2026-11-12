@@ -22,7 +22,8 @@ let W,H,S,VW,VH,OY,WY=0,portrait;
 // landscape: zoomed-in view, ground band = bottom 30% of the screen (touch buttons live there)
 const BIG_SPD=4.1,BIG_CHANCE=.5; // big people-eater: a bit faster than your 3.5 run; at most one per section, ~half the sections (never section 1)
 const LVH=285,BVH=440,GBAND=.3;let ZK=0; // normal levels zoomed in (285 world px tall); boss fights zoom out (440) smoothly
-function layout(){W=cv.width=innerWidth;H=cv.height=innerHeight;portrait=H>W;const hud=44,ctrl=portrait?150:0;
+function scr(){return window.DCVIEW?{w:DCVIEW.W,h:DCVIEW.H}:{w:innerWidth,h:innerHeight}}
+function layout(){const v=scr();W=cv.width=v.w;H=cv.height=v.h;portrait=H>W;const hud=44,ctrl=portrait?150:0;
  view();
  if(!portrait){['bl','br','bj','bp'].forEach(i=>$(i).style.opacity=.55)}}
 const EDGE=26;function edgeIn(){let l=0,r=0;const e=$('sap');if(e){const cs=getComputedStyle(e);l=parseFloat(cs.paddingLeft)||0;r=parseFloat(cs.paddingRight)||0}return {l:l/S+EDGE,r:r/S+EDGE}}
@@ -487,7 +488,7 @@ $('quitYes').onclick=()=>{$('quitq').classList.add('hide');G.paused=0;clearRun()
 let champT=0,champRAF=0,champConf=[];
 function champion(){if(!G.running)return;G.running=false;G.champ=1;G.score+=5000;clearRun();finishRun();$('champ').classList.remove('hide');champT=Date.now();champConf=[];say('Dino Champion! You beat all twenty bosses!');
  [523,659,784,1046,784,1046].forEach((f,i)=>pT(()=>beep(f,.18,'square',f*1.01),i*160));cancelAnimationFrame(champRAF);champRAF=requestAnimationFrame(champDraw)}
-function champDraw(){const cv=$('champc');if($('champ').classList.contains('hide'))return;const w=cv.width=innerWidth,h=cv.height=innerHeight,x=cv.getContext('2d'),t=(Date.now()-champT)/1000;x.imageSmoothingEnabled=false;
+function champDraw(){const cv=$('champc');if($('champ').classList.contains('hide'))return;const v=scr(),w=cv.width=v.w,h=cv.height=v.h,x=cv.getContext('2d'),t=(Date.now()-champT)/1000;x.imageSmoothingEnabled=false;
  const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#311b92');g.addColorStop(1,'#e91e63');x.fillStyle=g;x.fillRect(0,0,w,h);
  for(let i=0;i<8;i++){x.save();x.translate(w/2,h*.62);x.rotate(t*.4+i*Math.PI/4);x.fillStyle='rgba(255,235,59,.12)';x.beginPath();x.moveTo(0,0);x.lineTo(w,-60);x.lineTo(w,60);x.fill();x.restore()}
  const gy=Math.round(h*.8);x.fillStyle='#5d4037';x.fillRect(0,gy,w,h-gy);x.fillStyle='#7cb342';x.fillRect(0,gy,w,8);
@@ -602,7 +603,7 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ct
  {const vx=col+4,vy=hy+1;ctx.fillStyle='#000';ctx.fillRect(vx,vy+3,16,11);ctx.fillStyle='#8d6e63';ctx.fillRect(vx+1,vy+8,14,6);ctx.fillRect(vx+4,vy+4,8,4);ctx.fillStyle='#ff6d00';ctx.fillRect(vx+5,vy+2,6,3);ctx.fillStyle='#ffea00';ctx.fillRect(vx+7,vy,2,3)}pxText('x'+(G.thrown||0),col+24,hy,14,'#ffcc80');
  spr(SPR.gem,col+4,hy+16,2.2);pxText('x'+String(gems).padStart(2,'0'),col+24,hy+17,13,'#fff');
  pxText('LEVEL',lx,hy,14,'#fff');pxText(DIFFS[G.diff||diff],lx+52,hy+1,12,G.diff==='hard'?'#ff8a80':G.diff==='easy'?'#b2ff59':'#ffe082');pxText(G.inBonus?'BONUS':String(G.cur),lx,hy+16,14,'#fff');pxText('BOSS '+bossesBeat()+'/'+NBOSS,lx+(G.inBonus?60:36),hy+18,11,'#ffd54f');
- {const bw=Math.max(80,Math.min(160,VW/4-40)),mb=$('menub'),rs0=portrait?8:mb&&mb.getBoundingClientRect().width>0?(innerWidth-mb.getBoundingClientRect().left+6)/S:60,lo0=lvC?col*2+94:portrait?col*2+110:col*2+150,mw=Math.max(100,bw)+4;
+ {const bw=Math.max(80,Math.min(160,VW/4-40)),mb=$('menub'),rs0=portrait?8:mb&&((window.DCVIEW&&DCVIEW.rect(mb))||mb.getBoundingClientRect()).width>0?(scr().w-((window.DCVIEW&&DCVIEW.rect(mb))||mb.getBoundingClientRect()).left+6)/S:60,lo0=lvC?col*2+94:portrait?col*2+110:col*2+150,mw=Math.max(100,bw)+4;
   // v25 (QA open item): on narrow landscape screens (640x360) the home/sound buttons covered the belly numbers. If the meter cannot fit left of them, the buttons move just below the HUD bar.
   const low=(G.running||G.paused)&&!portrait&&lo0>VW-rs0-mw;if(low!==btnLow){btnLow=low;const t=low?Math.round(62*S+4)+'px':'4px';$('menub').style.top=t;$('snd').style.top=t}const rs=btnLow?8:rs0;
   belMeter(Math.max(lo0,Math.min(col*3,VW-rs-mw)),hy)}
